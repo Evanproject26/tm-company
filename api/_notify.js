@@ -32,14 +32,22 @@ export const ALIGO = {
 const SINGLE_ONLY_DATE     = '2026-05-18';
 const SINGLE_ONLY_RECEIVER = '01043008739';
 
+// EXCLUDE_PHONES — 콤마 구분 번호 목록. 비워두면 ADMIN_PHONE 전체 발송.
+// 대표 지시: "내가 말하면 8739 제외" → 그때 Vercel 환경변수에 01043008739 등록.
 export function adminReceivers() {
   if (kstToday() === SINGLE_ONLY_DATE) {
     return [SINGLE_ONLY_RECEIVER];
   }
+  const exclude = new Set(
+    String(process.env.EXCLUDE_PHONES || '')
+      .split(/[,\s]+/)
+      .map(s => s.replace(/[^0-9]/g, ''))
+      .filter(Boolean)
+  );
   return String(ALIGO.admin || '')
     .split(/[,\s]+/)
     .map(s => s.replace(/[^0-9]/g, ''))
-    .filter(s => s.length >= 10);
+    .filter(s => s.length >= 10 && !exclude.has(s));
 }
 
 export function kstToday() {
