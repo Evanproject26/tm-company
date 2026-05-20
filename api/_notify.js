@@ -52,27 +52,37 @@ export function kstToday() {
 }
 
 // 알리고 SMS/LMS 단건 발송 — 90바이트 초과 시 자동 LMS 전환
-// API: https://apis.aligo.in/send/
-// 친구톡/알림톡과 달리 템플릿 등록·친구추가 불필요 — 즉시 발송
+// RELAY_URL+RELAY_API_KEY 설정 시 도쿄 EC2 릴레이 경유 (고정 IP 43.206.72.219).
+// 미설정 시 알리고 직접 호출 (기존 동작 — Vercel egress IP 화이트리스트 의존).
 async function sendOne({ message, receiver, subject }) {
-  const form = new URLSearchParams();
-  form.append('key', ALIGO.apikey);
-  form.append('user_id', ALIGO.userid);
-  form.append('sender', ALIGO.sender);
-  form.append('receiver', receiver);
-  form.append('msg', message);
-  form.append('title', subject);
-  form.append('msg_type', message.length > 90 ? 'LMS' : 'SMS');
-  form.append('testmode_yn', 'N');
+  const msg_type = message.length > 90 ? 'LMS' : 'SMS';
+  const payload = {
+    key: ALIGO.apikey,
+    user_id: ALIGO.userid,
+    sender: ALIGO.sender,
+    receiver, msg: message, title: subject,
+    msg_type, testmode_yn: 'N',
+  };
 
-  const res = await fetch('https://apis.aligo.in/send/', {
-    method: 'POST',
-    body: form,
-  });
-  const text = await res.text();
+  const relayUrl = process.env.RELAY_URL;
+  const relayKey = process.env.RELAY_API_KEY;
+  let res, text;
+  if (relayUrl && relayKey) {
+    res = await fetch(`${relayUrl}/send`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-relay-key': relayKey },
+      body: JSON.stringify(payload),
+    });
+    text = await res.text();
+  } else {
+    const form = new URLSearchParams();
+    for (const [k, v] of Object.entries(payload)) form.append(k, v);
+    res = await fetch('https://apis.aligo.in/send/', { method: 'POST', body: form });
+    text = await res.text();
+  }
+
   let json;
   try { json = JSON.parse(text); } catch { json = { raw: text }; }
-  // 알리고 성공: result_code === '1' (string). 실패 음수.
   const okBody = String(json?.result_code) === '1';
   return { receiver, status: res.status, ok: res.ok && okBody, body: json };
 }
