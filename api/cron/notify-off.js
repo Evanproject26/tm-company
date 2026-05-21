@@ -1,7 +1,6 @@
-// 그 날 휴무자 알림 — 매일 2회 자동 발송 (대표 지시)
-//   1) 00:01 KST (15:01 UTC) — 자정 직후 알림
-//   2) 07:30 KST (22:30 UTC) — 출근 전 리마인드
-// 발송 로직은 api/_notify.js 공유 모듈로 분리 (즉시 발송에서도 같은 함수 사용)
+// 그 날 휴무자 알림 — 매일 1회 KST 12:00 (UTC 03:00) 자동 발송 (대표 지시 2026-05-22)
+// 발송 정책: 휴무 신청 즉시 1차(api/att/request.js) + 휴무일 정오 12시 2차(이 cron) = 총 2회
+// ADMIN_PHONE 3번호 모두에 카톡+문자 동시 발송 (sendAdminBoth)
 
 import { sql } from '../_db.js';
 import { ALIGO, kstToday, buildOffMessage, sendAdminFriendtalk, sendAdminAlimtalk, sendAdminBoth } from '../_notify.js';
