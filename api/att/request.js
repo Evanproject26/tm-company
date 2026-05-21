@@ -4,7 +4,7 @@
 //   POST /api/att/cancel  (?__op=cancel)
 //   GET  /api/att/pending (?__op=pending)
 import { sql, requireAuth, readJson } from '../_db.js';
-import { buildSingleOffMessage, sendAdminFriendtalk, sendAdminAlimtalk } from '../_notify.js';
+import { buildSingleOffMessage, sendAdminFriendtalk, sendAdminAlimtalk, sendAdminBoth } from '../_notify.js';
 
 const VALID_TYPES = new Set(['WORK','OFF','HALF_AM','HALF_PM','MONTHLY','ANNUAL','SICK','HOLIDAY','UNAUTHORIZED']);
 const TIER1_REQUESTABLE = new Set(['OFF','UNAUTHORIZED']);
@@ -112,7 +112,7 @@ export default requireAuth(async function handler(req, res) {
     if (type !== 'WORK') {
       const tgt = await sql`SELECT name FROM users WHERE id = ${targetId}`;
       const empName = tgt[0]?.name || `#${targetId}`;
-      sendAdminAlimtalk({ name: empName, date, type })
+      sendAdminBoth({ name: empName, date, type })
         .catch(e => console.error('notify(request) failed:', e.message));
     }
 

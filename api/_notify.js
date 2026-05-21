@@ -169,6 +169,18 @@ export async function sendAdminAlimtalk({ name, date, type, overrideReceivers })
   return { ok: okAll, sent: results };
 }
 
+// 알림톡 + SMS 동시 발송 (대표 지시 — 검증 기간 카톡·문자 둘 다 받기)
+// 알리고는 알림톡 failover 가 카톡 실패 시에만 SMS 떨어트림 — 카톡 성공 시 SMS 안 옴.
+// 둘 다 무조건 받으려면 별도로 SMS 1건 더 쏨.
+export async function sendAdminBoth({ name, date, type, overrideReceivers }) {
+  const body = buildAlimtalkOffBody({ name, date, type });
+  const [at, sms] = await Promise.all([
+    sendAdminAlimtalk({ name, date, type, overrideReceivers }),
+    sendAdminFriendtalk({ message: body, subject: '[티엠컴퍼니 휴무 알림]', overrideReceivers }),
+  ]);
+  return { ok: at.ok && sms.ok, alimtalk: at, sms };
+}
+
 // 휴무자 1건 메시지 ([티엠컴퍼니 휴무 알림] — 직원명/일자/휴무유형 카드)
 export function buildOffMessage({ rows, date, header }) {
   const blocks = rows.map((r, i) =>

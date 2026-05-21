@@ -1,5 +1,5 @@
 import { sql, requireAuth, readJson } from '../_db.js';
-import { buildSingleOffMessage, sendAdminFriendtalk, sendAdminAlimtalk } from '../_notify.js';
+import { buildSingleOffMessage, sendAdminFriendtalk, sendAdminAlimtalk, sendAdminBoth } from '../_notify.js';
 
 // POST /api/att/approve
 // body: { id, action: 'approve' | 'reject', reject_reason? }
@@ -58,7 +58,7 @@ function notifyAdmin(record, kind) {
     const empName = u[0]?.name || `#${record.user_id}`;
     const date = String(record.work_date).slice(0, 10);
     if (kind === 'APPROVED') {
-      return sendAdminAlimtalk({ name: empName, date, type: record.type });
+      return sendAdminBoth({ name: empName, date, type: record.type });
     }
     const message = buildSingleOffMessage({
       name: empName, date, type: record.type, kind,

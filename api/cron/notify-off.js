@@ -4,7 +4,7 @@
 // 발송 로직은 api/_notify.js 공유 모듈로 분리 (즉시 발송에서도 같은 함수 사용)
 
 import { sql } from '../_db.js';
-import { ALIGO, kstToday, buildOffMessage, sendAdminFriendtalk, sendAdminAlimtalk } from '../_notify.js';
+import { ALIGO, kstToday, buildOffMessage, sendAdminFriendtalk, sendAdminAlimtalk, sendAdminBoth } from '../_notify.js';
 
 export default async function handler(req, res) {
   // Vercel Cron 만 호출 가능 (Authorization: Bearer CRON_SECRET)
@@ -30,15 +30,49 @@ export default async function handler(req, res) {
     return res.status(200).json({ samples, unique: [...new Set(samples)] });
   }
 
-  // 테스트 발송 — ?test=1 알림톡 UH_9702 직접 발송 (가짜 휴무자 1건)
-  // 응답에 알리고 raw 결과 포함 → senderkey/템플릿 매칭 즉시 판정
+  // 테스트 발송 — ?test=1 알림톡 + SMS 동시 발송 (대표 지시)
   if (req.query.test === '1') {
-    const r = await sendAdminAlimtalk({
+    const r = await sendAdminBoth({
       name: '테스트', date: kstToday(), type: 'OFF',
       overrideReceivers: req.query.to
         ? String(req.query.to).split(/[,\s]+/).filter(Boolean) : null,
     });
-    return res.status(200).json({ ok: r.ok, mode: 'alimtalk-test', aligo: r.sent });
+    return res.status(200).json({ ok: r.ok, mode: 'both-test', alimtalk: r.alimtalk?.sent, sms: r.sms?.sent });
+  }
+
+  // ?seed=2 → 5/22 자 2차 직원 2명 임의 휴무(연차) 등록 + 알림톡+SMS 동시 발송 (대표 지시)
+  // ?reset=1 도 같이 주면 attendance_records 전체 초기화 후 시드
+  if (req.query.seed === '2') {
+    const seedDate = req.query.date || '2026-05-22';
+    if (req.query.reset === '1') {
+      await sql`DELETE FROM attendance_records`;
+    }
+    const candidates = await sql`
+      SELECT id, name FROM users
+      WHERE tier = 2 AND name NOT IN ('2','3')
+      ORDER BY id ASC LIMIT 2
+    `;
+    if (candidates.length < 2) {
+      return res.status(400).json({ error: '2차 직원 2명 미만', found: candidates });
+    }
+    const overrideReceivers = req.query.to
+      ? String(req.query.to).split(/[,\s]+/).filter(Boolean) : ['01043008739'];
+    const seeded = [];
+    for (const u of candidates) {
+      const rows = await sql`
+        INSERT INTO attendance_records (user_id, work_date, type, status, requested_at)
+        VALUES (${u.id}, ${seedDate}, 'ANNUAL', 'APPROVED', NOW())
+        ON CONFLICT (user_id, work_date) DO UPDATE
+          SET type = 'ANNUAL', status = 'APPROVED', requested_at = NOW(),
+              reject_reason = NULL
+        RETURNING *
+      `;
+      const r = await sendAdminBoth({
+        name: u.name, date: seedDate, type: 'ANNUAL', overrideReceivers,
+      });
+      seeded.push({ user: u.name, record_id: rows[0]?.id, notify: r.ok });
+    }
+    return res.status(200).json({ ok: true, mode: 'seed-2', date: seedDate, seeded });
   }
 
   // ?date=YYYY-MM-DD 로 임의 날짜 미리 발송 (대표 지시 — 테스트용)
@@ -64,17 +98,16 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, date: today, count: 0, sent: false, note: '오늘 휴무자 없음 — 발송 안 함' });
   }
 
-  // 알림톡(UH_9702)은 휴무자 1명 단위 템플릿 — 다중 휴무 시 N건 발송
-  // 카톡 실패 시 알리고 콘솔 대체발송 문자(SMS)로 자동 폴백
+  // 휴무자 1명당 알림톡+SMS 동시 발송 (대표 지시 — 검증 기간 둘 다 받기)
   const perPerson = await Promise.all(
-    rows.map(r => sendAdminAlimtalk({
+    rows.map(r => sendAdminBoth({
       name: r.name, date: today, type: r.type, overrideReceivers,
     }))
   );
   const message = buildOffMessage({ rows, date: today });
   const result = {
     ok: perPerson.every(p => p.ok),
-    sent: perPerson.flatMap(p => p.sent || []),
+    sent: perPerson.flatMap(p => [...(p.alimtalk?.sent || []), ...(p.sms?.sent || [])]),
   };
 
   return res.status(200).json({
