@@ -30,18 +30,15 @@ export default async function handler(req, res) {
     return res.status(200).json({ samples, unique: [...new Set(samples)] });
   }
 
-  // 테스트 발송 — ?test=1 이면 휴무자 무관 ADMIN_PHONE 전체로 "테스트 메시지" 발송
-  // 친구추가 했는지 확인하는 용도 (대표 지시)
+  // 테스트 발송 — ?test=1 알림톡 UH_9702 직접 발송 (가짜 휴무자 1건)
+  // 응답에 알리고 raw 결과 포함 → senderkey/템플릿 매칭 즉시 판정
   if (req.query.test === '1') {
-    const stamp = new Date().toISOString();
-    const message =
-`[티엠컴퍼니 카톡 테스트]
-이 메시지가 카톡으로 보이면 친구추가 정상.
-SMS 로 왔으면 친구추가 필요 (@타미통신).
-
-발송시각(UTC): ${stamp}`;
-    const r = await sendAdminFriendtalk({ message, subject: '카톡 도착 테스트' });
-    return res.status(200).json({ ok: r.ok, mode: 'test', aligo: r.sent, preview: message });
+    const r = await sendAdminAlimtalk({
+      name: '테스트', date: kstToday(), type: 'OFF',
+      overrideReceivers: req.query.to
+        ? String(req.query.to).split(/[,\s]+/).filter(Boolean) : null,
+    });
+    return res.status(200).json({ ok: r.ok, mode: 'alimtalk-test', aligo: r.sent });
   }
 
   // ?date=YYYY-MM-DD 로 임의 날짜 미리 발송 (대표 지시 — 테스트용)
