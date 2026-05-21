@@ -57,14 +57,15 @@ export default async function handler(req, res) {
     }
     const overrideReceivers = req.query.to
       ? String(req.query.to).split(/[,\s]+/).filter(Boolean) : ['01043008739'];
+    // 승인대기(REQUESTED) 로 등록 — 대표 지시: "승인대기에 떠야 한다"
     const seeded = [];
     for (const u of candidates) {
       const rows = await sql`
-        INSERT INTO attendance_records (user_id, work_date, type, status, requested_at)
-        VALUES (${u.id}, ${seedDate}, 'ANNUAL', 'APPROVED', NOW())
+        INSERT INTO attendance_records (user_id, work_date, type, status, requested_at, approved_by, approved_at)
+        VALUES (${u.id}, ${seedDate}, 'ANNUAL', 'REQUESTED', NOW(), NULL, NULL)
         ON CONFLICT (user_id, work_date) DO UPDATE
-          SET type = 'ANNUAL', status = 'APPROVED', requested_at = NOW(),
-              reject_reason = NULL
+          SET type = 'ANNUAL', status = 'REQUESTED', requested_at = NOW(),
+              approved_by = NULL, approved_at = NULL, reject_reason = NULL
         RETURNING *
       `;
       const r = await sendAdminBoth({
