@@ -109,6 +109,52 @@ export async function sendAdminFriendtalk({ message, subject, overrideReceivers 
   return { ok: okAll, sent: results };
 }
 
+// 알리고 알림톡 단건 — 템플릿코드 UH_9702 (휴무 알림)
+// 카톡 실패 시 failover=Y 로 알리고가 자동 SMS 대체발송 (콘솔 등록된 대체문구 사용)
+export const ALIMTALK_TPL_CODE = process.env.ALIMTALK_TPL_OFF || 'UH_9702';
+export function buildAlimtalkOffBody({ name, date, type }) {
+  const label = TYPE_LABEL[type] || type;
+  // 템플릿 본문과 글자단위 일치 — 변수 외 공백/줄바꿈 변경 금지
+  return `[티엠컴퍼니 휴무 알림]\n 직원명: ${name}\n 일자: ${date}\n 휴무유형: ${label}`;
+}
+async function sendOneAlimtalk({ name, date, type, receiver }) {
+  const body = buildAlimtalkOffBody({ name, date, type });
+  const payload = {
+    apikey:    ALIGO.apikey,
+    userid:    ALIGO.userid,
+    senderkey: ALIGO.senderkey,
+    tpl_code:  ALIMTALK_TPL_CODE,
+    sender:    ALIGO.sender,
+    receiver_1: receiver,
+    subject_1:  '[티엠컴퍼니 휴무 알림]',
+    message_1:  body,
+    failover:   'Y',
+    re_subject_1: '[티엠컴퍼니 휴무 알림]',
+    re_message_1: body,
+    testmode_yn: 'N',
+  };
+  const form = new URLSearchParams();
+  for (const [k, v] of Object.entries(payload)) form.append(k, v);
+  const res = await fetch('https://kakaoapi.aligo.in/akv10/alimtalk/send/', {
+    method: 'POST', body: form,
+  });
+  const text = await res.text();
+  let json; try { json = JSON.parse(text); } catch { json = { raw: text }; }
+  const okBody = String(json?.code) === '0';
+  return { receiver, status: res.status, ok: res.ok && okBody, body: json };
+}
+export async function sendAdminAlimtalk({ name, date, type, overrideReceivers }) {
+  const receivers = Array.isArray(overrideReceivers) && overrideReceivers.length
+    ? overrideReceivers.map(s => String(s).replace(/[^0-9]/g, '')).filter(Boolean)
+    : adminReceivers();
+  if (!receivers.length) return { ok: false, error: 'no-admin-phone', sent: [] };
+  const results = await Promise.all(
+    receivers.map(r => sendOneAlimtalk({ name, date, type, receiver: r }))
+  );
+  const okAll = results.every(r => r.ok);
+  return { ok: okAll, sent: results };
+}
+
 // 휴무자 1건 메시지 ([티엠컴퍼니 휴무 알림] — 직원명/일자/휴무유형 카드)
 export function buildOffMessage({ rows, date, header }) {
   const blocks = rows.map((r, i) =>

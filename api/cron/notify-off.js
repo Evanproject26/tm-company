@@ -4,7 +4,7 @@
 // 발송 로직은 api/_notify.js 공유 모듈로 분리 (즉시 발송에서도 같은 함수 사용)
 
 import { sql } from '../_db.js';
-import { ALIGO, kstToday, buildOffMessage, sendAdminFriendtalk } from '../_notify.js';
+import { ALIGO, kstToday, buildOffMessage, sendAdminFriendtalk, sendAdminAlimtalk } from '../_notify.js';
 
 export default async function handler(req, res) {
   // Vercel Cron 만 호출 가능 (Authorization: Bearer CRON_SECRET)
@@ -67,12 +67,18 @@ SMS 로 왔으면 친구추가 필요 (@타미통신).
     return res.status(200).json({ ok: true, date: today, count: 0, sent: false, note: '오늘 휴무자 없음 — 발송 안 함' });
   }
 
+  // 알림톡(UH_9702)은 휴무자 1명 단위 템플릿 — 다중 휴무 시 N건 발송
+  // 카톡 실패 시 알리고 콘솔 대체발송 문자(SMS)로 자동 폴백
+  const perPerson = await Promise.all(
+    rows.map(r => sendAdminAlimtalk({
+      name: r.name, date: today, type: r.type, overrideReceivers,
+    }))
+  );
   const message = buildOffMessage({ rows, date: today });
-  const result = await sendAdminFriendtalk({
-    message,
-    subject: '오늘 휴무자 알림',
-    overrideReceivers,
-  });
+  const result = {
+    ok: perPerson.every(p => p.ok),
+    sent: perPerson.flatMap(p => p.sent || []),
+  };
 
   return res.status(200).json({
     ok: result.ok,

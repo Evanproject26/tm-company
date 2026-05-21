@@ -4,7 +4,7 @@
 //   POST /api/att/cancel  (?__op=cancel)
 //   GET  /api/att/pending (?__op=pending)
 import { sql, requireAuth, readJson } from '../_db.js';
-import { buildSingleOffMessage, sendAdminFriendtalk } from '../_notify.js';
+import { buildSingleOffMessage, sendAdminFriendtalk, sendAdminAlimtalk } from '../_notify.js';
 
 const VALID_TYPES = new Set(['WORK','OFF','HALF_AM','HALF_PM','MONTHLY','ANNUAL','SICK','HOLIDAY','UNAUTHORIZED']);
 const TIER1_REQUESTABLE = new Set(['OFF','UNAUTHORIZED']);
@@ -112,14 +112,8 @@ export default requireAuth(async function handler(req, res) {
     if (type !== 'WORK') {
       const tgt = await sql`SELECT name FROM users WHERE id = ${targetId}`;
       const empName = tgt[0]?.name || `#${targetId}`;
-      const message = buildSingleOffMessage({
-        name: empName, date, type,
-        kind: status === 'APPROVED' ? 'APPROVED' : 'REGISTERED',
-      });
-      sendAdminFriendtalk({
-        message,
-        subject: status === 'APPROVED' ? '휴무 등록(즉시 승인)' : '휴무 신청 접수',
-      }).catch(e => console.error('notify(request) failed:', e.message));
+      sendAdminAlimtalk({ name: empName, date, type })
+        .catch(e => console.error('notify(request) failed:', e.message));
     }
 
     return res.status(200).json({ ok: true, record: rows[0] });
