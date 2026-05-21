@@ -29,7 +29,7 @@ export const ALIGO = {
 // 일회성 단일번호 강제 발송 날짜 (대표 지시) — 이 날 KST 0시~23시59분에는
 // ADMIN_PHONE 무시하고 SINGLE_ONLY_RECEIVER 한 번호로만 발송.
 // 날짜 지나면 자동으로 ADMIN_PHONE 3번호 발송으로 복원.
-const SINGLE_ONLY_DATE     = '2026-05-18';
+const SINGLE_ONLY_DATE     = '2026-05-21';
 const SINGLE_ONLY_RECEIVER = '01043008739';
 
 // EXCLUDE_PHONES — 콤마 구분 번호 목록. 비워두면 ADMIN_PHONE 전체 발송.
