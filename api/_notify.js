@@ -133,12 +133,26 @@ async function sendOneAlimtalk({ name, date, type, receiver }) {
     re_message_1: body,
     testmode_yn: 'N',
   };
-  const form = new URLSearchParams();
-  for (const [k, v] of Object.entries(payload)) form.append(k, v);
-  const res = await fetch('https://kakaoapi.aligo.in/akv10/alimtalk/send/', {
-    method: 'POST', body: form,
-  });
-  const text = await res.text();
+
+  const relayUrl = process.env.RELAY_URL;
+  const relayKey = process.env.RELAY_API_KEY;
+  let res, text;
+  if (relayUrl && relayKey) {
+    res = await fetch(`${relayUrl}/alimtalk`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-relay-key': relayKey },
+      body: JSON.stringify(payload),
+    });
+    text = await res.text();
+  } else {
+    const form = new URLSearchParams();
+    for (const [k, v] of Object.entries(payload)) form.append(k, v);
+    res = await fetch('https://kakaoapi.aligo.in/akv10/alimtalk/send/', {
+      method: 'POST', body: form,
+    });
+    text = await res.text();
+  }
+
   let json; try { json = JSON.parse(text); } catch { json = { raw: text }; }
   const okBody = String(json?.code) === '0';
   return { receiver, status: res.status, ok: res.ok && okBody, body: json };
