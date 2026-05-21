@@ -76,6 +76,18 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, mode: 'seed-2', date: seedDate, seeded });
   }
 
+  // ?fix=requested → 5/22 자 강보람·국나래 (record_id 31·32) status를 REQUESTED 로 정정 (알림 안 쏨)
+  if (req.query.fix === 'requested') {
+    const r = await sql`
+      UPDATE attendance_records
+         SET status = 'REQUESTED', approved_by = NULL, approved_at = NULL,
+             reject_reason = NULL, requested_at = NOW()
+       WHERE id IN (31, 32)
+      RETURNING id, user_id, work_date, status
+    `;
+    return res.status(200).json({ ok: true, mode: 'fix-requested', updated: r });
+  }
+
   // ?date=YYYY-MM-DD 로 임의 날짜 미리 발송 (대표 지시 — 테스트용)
   const today = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '') ? req.query.date : kstToday();
   // ?to=01043008739,01012345678 — 특정 번호로만 발송 (테스트 1회용, 대표 지시)
