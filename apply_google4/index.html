@@ -32,17 +32,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
    - 컬러 통일: 빨강 #FF0B00, 파랑 #1562CF, 본문 #2B2B2B
 ==================================================================== */
 :root{
-  --blue:#1562CF;
-  --blue-l:#eef2fa;
-  --red:#FF0B00;
-  --ink:#2B2B2B;
+  /* 4색 시스템 — 갤럭시 공식 톤으로 차별화 */
+  --blue:#1428A0;     /* 갤럭시 공식 파랑 — 메인 CTA·강조 */
+  --blue-l:#e8ebf6;
+  --red:#FF0B00;      /* 포인트·경고 */
+  --ink:#1a1a1a;      /* 본문·박스 (검정 톤) */
   --sub:#666;
   --bdr:#e5e7eb;
   --bg:#f5f5f7;
+  --hl:#ffeb3b;       /* 형광펜 — 1군데만 */
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{-webkit-text-size-adjust:none;scroll-behavior:smooth}
-body{font-family:Dotum,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:14px;color:var(--ink);background:#fff;-webkit-font-smoothing:antialiased;line-height:1.5}
+body{font-family:Dotum,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:16px;color:var(--ink);background:#fff;-webkit-font-smoothing:antialiased;line-height:1.55}
 img{max-width:100%;display:block;border:0}
 a{color:inherit;text-decoration:none}
 ul,ol,li{list-style:none}
@@ -51,20 +53,37 @@ ul,ol,li{list-style:none}
 .htag{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 
 /* ============ 마감임박 + 단독한정 특가 (Image #8) ============ */
-.lim-urgent{background:#111;padding:14px 20px;text-align:center;position:relative;overflow:hidden}
-.lim-urgent p{font-size:18px;font-weight:bold;color:#fff;letter-spacing:-.02em}
+.lim-urgent{background:#111;padding:14px 16px;text-align:center;position:relative;overflow:hidden}
+.lim-urgent p{font-size:24px;font-weight:900;color:#fff;letter-spacing:-.025em;line-height:1.2}
 .lim-urgent .hl{color:#ff4d4d;animation:limBlink 1s step-end infinite;text-shadow:0 0 8px rgba(255,77,77,.6)}
 @keyframes limBlink{0%,50%,100%{opacity:1}25%,75%{opacity:.35}}
 
-.limited-sec{background:linear-gradient(180deg,#fff 0%,#fafafa 100%);padding:0 0 30px}
-.limited-sec .c{padding-top:22px;text-align:center}
-.lim-lineup{font-size:20px;font-weight:bold;color:var(--ink);margin-bottom:8px;letter-spacing:-.01em}
-.lim-lineup span{color:#cfd4e4;margin:0 8px}
-.lim-title{font-size:54px;font-weight:900;color:var(--blue);letter-spacing:-.025em;margin-bottom:20px;line-height:1.05;font-style:italic;font-family:'Pretendard Variable','Apple SD Gothic Neo',sans-serif;background:linear-gradient(180deg,transparent 70%,#ffeb3b 70%,#ffeb3b 95%,transparent 95%);display:inline-block;padding:0 8px}
+.limited-sec{background:#fff;padding:0 0 24px}
+.limited-sec .c{padding:14px 16px 0;text-align:center}
+.lim-lineup{font-size:clamp(22px,6.6vw,44px);font-weight:800;color:var(--ink);letter-spacing:-.025em;margin-bottom:12px;line-height:1.1;display:flex;justify-content:space-evenly;align-items:center;font-family:'Pretendard Variable','Apple SD Gothic Neo',sans-serif;width:100%;padding:0}
+.lim-lineup span{flex-shrink:0}
+.lim-lineup .dot{color:var(--sub);font-weight:400;opacity:.5;flex:0 1 auto}
+.lim-title-wrap{width:100%;text-align:center;margin-bottom:10px;padding:0 4px;overflow:hidden}
+.lim-title{font-size:80px;font-weight:900;letter-spacing:-.045em;line-height:1.05;font-family:'Pretendard Variable','Apple SD Gothic Neo',sans-serif;background:linear-gradient(135deg,var(--ink) 0%,var(--ink) 38%,var(--red) 68%,#ff7a00 100%);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block;white-space:nowrap;transform:skewX(-9deg);transform-origin:center;padding:0 .14em}
+.lim-subhead{font-size:19px;font-weight:bold;color:var(--sub);margin-bottom:24px;letter-spacing:-.01em}
 
-.lim-hero-wrap{position:relative;max-width:100%;margin:10px auto 18px;aspect-ratio:29/21;overflow:hidden}
-.lim-hero-wrap img{width:100%;height:100%;object-fit:contain;object-position:center;display:block}
-.lim-medal{position:absolute;bottom:6%;right:2%;width:84px;transform:rotate(10deg);z-index:3}
+.lim-hero-wrap{position:relative;max-width:720px;margin:8px auto 18px;background:#fff;text-align:center}
+.lim-hero-wrap::after{content:'';position:absolute;left:50%;bottom:-4%;width:96%;height:62%;background:radial-gradient(ellipse at 50% 50%,#1a1a1a 0%,#000 80%);border-radius:50%;transform:translateX(-50%);z-index:0;pointer-events:none}
+.lim-hero-wrap > img.hero-phone{width:100%;height:auto;display:block;margin:0 auto;position:relative;z-index:2}
+.hero-medal{position:absolute;right:0%;bottom:-6%;width:38%;max-width:220px;aspect-ratio:1/1;z-index:5;transform:rotate(-8deg);filter:drop-shadow(0 8px 18px rgba(0,0,0,.22))}
+.hero-medal svg{width:100%;height:100%;display:block}
+@media(max-width:480px){
+  .hero-medal{width:42%;right:-2%;bottom:-4%}
+}
+.galaxy-text{position:absolute;left:50%;bottom:12%;transform:translateX(-50%);z-index:3;font-family:'Pretendard Variable','Apple SD Gothic Neo',sans-serif;font-size:clamp(46px,13.5vw,92px);font-weight:900;font-style:italic;color:#fff;letter-spacing:-.045em;line-height:.95;text-align:center;text-shadow:0 6px 22px rgba(0,0,0,.6),0 2px 4px rgba(0,0,0,.4);white-space:nowrap}
+.lim-medal{position:absolute;top:46%;right:5%;width:90px;transform:rotate(10deg) translateY(-50%);z-index:5}
+.lim-medal>div{position:relative;width:90px;height:90px}
+.lim-medal svg.med{position:absolute;inset:0;width:100%;height:100%}
+.lim-medal .med-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#5a2d08;font-weight:bold;line-height:1}
+.lim-medal .med-text .s1{font-size:11px}
+.lim-medal .med-text .s2{font-size:24px;margin-top:3px;letter-spacing:-.02em}
+.lim-medal svg.ribbon{display:block;margin:-4px auto 0;width:62px;height:30px}
+.lim-medal{position:absolute;top:42%;right:6%;width:86px;transform:rotate(10deg) translateY(-50%);z-index:5}
 .lim-medal>div{position:relative;width:84px;height:84px}
 .lim-medal svg.med{position:absolute;inset:0;width:100%;height:100%}
 .lim-medal .med-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#5a2d08;font-weight:bold;line-height:1}
@@ -72,57 +91,90 @@ ul,ol,li{list-style:none}
 .lim-medal .med-text .s2{font-size:22px;margin-top:3px;letter-spacing:-.02em}
 .lim-medal svg.ribbon{display:block;margin:-4px auto 0;width:58px;height:28px}
 
-.lim-galaxy{text-align:center;margin:0 0 18px;font-size:38px;font-weight:900;color:var(--blue);font-style:italic;line-height:1;letter-spacing:-.03em;font-family:'Pretendard Variable',sans-serif}
+.lim-galaxy{text-align:center;margin:0 0 18px;font-size:clamp(54px,16vw,108px);font-weight:900;color:var(--ink);font-style:italic;line-height:1;letter-spacing:-.045em;font-family:'Pretendard Variable',sans-serif;white-space:nowrap;padding:0 4px}
 
-.lim-conn{position:relative;max-width:480px;margin:0 auto;padding:0 6px 60px}
-.lim-conn .row{display:flex;justify-content:space-between;align-items:center;gap:14px;position:relative;z-index:2}
-.lim-callout{border:1.5px solid #c5cdec;padding:12px 14px;line-height:1.25;text-align:center;white-space:nowrap;position:relative}
-.lim-callout.y{background:#fffce8;border-color:#f0c75a}
-.lim-callout.b{background:#e8f1ff;border-color:#c5cdec}
-.lim-callout .l1{font-size:13px;color:var(--sub);font-weight:bold;display:block;margin-bottom:3px}
-.lim-callout .l2{font-size:18px;font-weight:bold;color:var(--ink);letter-spacing:-.01em}
-.lim-h{position:absolute;left:32%;right:32%;top:34px;border-top:2px dashed #999;opacity:.7;z-index:1}
-.lim-v{position:absolute;left:50%;top:33px;width:0;height:62px;transform:translateX(-50%);border-left:2px dashed #999;opacity:.7;z-index:1}
-.lim-arrow{position:absolute;left:50%;top:91px;transform:translateX(-50%);width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:13px solid var(--ink);opacity:.88;z-index:1}
-
-.lim-pill{display:inline-block;background:#fff;border:2px solid var(--ink);color:var(--ink);border-radius:999px;padding:10px 30px;font-size:22px;font-weight:bold;margin-bottom:14px;letter-spacing:-.01em}
-.lim-price{font-size:72px;font-weight:900;color:var(--red);letter-spacing:-.04em;line-height:1;font-style:italic;margin-bottom:20px;font-family:'Pretendard Variable',sans-serif;background:linear-gradient(180deg,transparent 80%,var(--red) 80%,var(--red) 92%,transparent 92%);display:inline-block;padding:0 8px}
-.lim-quote{font-size:18px;color:var(--ink);font-weight:bold;letter-spacing:-.01em;line-height:1.5;padding:0 12px}
-.lim-quote .qm{color:var(--blue);font-size:28px;font-weight:900;vertical-align:-6px}
-.lim-quote .em{color:var(--red);font-weight:bold;background:#fff3a0;padding:0 4px}
+.lim-conn{position:relative;max-width:560px;margin:0 auto;padding:18px 6px 90px}
+.lim-conn .row{display:flex;justify-content:space-between;align-items:stretch;gap:32px;position:relative;z-index:2}
+.lim-callout{background:#fff;padding:18px 14px 16px;line-height:1.2;text-align:center;white-space:nowrap;position:relative;border-radius:14px;flex:1;display:flex;flex-direction:column;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.1);transform:translateZ(0);animation:cardFloat 3s ease-in-out infinite}
+.lim-callout.b{animation-delay:1.5s}
+@keyframes cardFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.lim-callout.y{background:linear-gradient(180deg,#fffce0 0%,#ffe88a 100%);border:2.5px solid #d68f0a}
+.lim-callout.b{background:linear-gradient(180deg,#e8edff 0%,#c3cef7 100%);border:2.5px solid var(--blue)}
+.lim-callout .l1{font-size:13px;font-weight:bold;display:block;margin-bottom:6px;letter-spacing:-.01em;text-transform:uppercase}
+.lim-callout.y .l1{color:#9c6a0a}
+.lim-callout.b .l1{color:var(--blue);opacity:.8}
+.lim-callout .l2{font-size:24px;font-weight:900;letter-spacing:-.02em;line-height:1.15}
+.lim-callout.y .l2{color:#5a3a05}
+.lim-callout.b .l2{color:var(--blue)}
+.lim-plus{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;z-index:3;box-shadow:0 4px 14px rgba(255,11,0,.35);animation:plusPulse 1.6s ease-in-out infinite}
+@keyframes plusPulse{0%,100%{transform:translate(-50%,-50%) scale(1);box-shadow:0 4px 14px rgba(255,11,0,.35)}50%{transform:translate(-50%,-50%) scale(1.08);box-shadow:0 6px 22px rgba(255,11,0,.55)}}
+.lim-callout .badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:11px;font-weight:900;padding:4px 10px;border-radius:999px;letter-spacing:.02em;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.lim-callout.y .badge{background:#d68f0a}
+.lim-callout.b .badge{background:var(--blue)}
+.lim-h{display:none}
+.lim-v{position:absolute;left:50%;top:calc(100% - 88px);width:0;height:36px;transform:translateX(-50%);border-left:3px dashed var(--ink);opacity:.6;z-index:1;background-image:linear-gradient(180deg,var(--ink) 50%,transparent 50%);background-size:1px 12px;animation:dashFlow 1.2s linear infinite}
+@keyframes dashFlow{0%{background-position:0 0}100%{background-position:0 12px}}
+.lim-arrow{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:18px solid var(--ink);z-index:1;animation:arrowBounce 1.2s ease-in-out infinite}
+@keyframes arrowBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(5px)}}
 
 @media(max-width:480px){
-  .lim-urgent p{font-size:16px}
-  .lim-lineup{font-size:17px}
-  .lim-title{font-size:40px}
-  .lim-galaxy{font-size:30px}
-  .lim-price{font-size:56px}
-  .lim-pill{font-size:18px;padding:8px 22px}
-  .lim-callout .l2{font-size:15px}
+  .lim-conn .row{gap:22px}
+  .lim-callout{padding:14px 10px 12px}
   .lim-callout .l1{font-size:11px}
+  .lim-callout .l2{font-size:19px}
+  .lim-plus{width:34px;height:34px;font-size:20px}
+}
+
+.lim-pill{display:inline-block;background:var(--ink);border:2px solid var(--ink);color:#fff;border-radius:999px;padding:13px 36px;font-size:26px;font-weight:bold;margin-bottom:16px;letter-spacing:-.01em;position:relative;box-shadow:0 4px 14px rgba(0,0,0,.22);animation:pillGlow 2s ease-in-out infinite}
+@keyframes pillGlow{0%,100%{box-shadow:0 4px 14px rgba(0,0,0,.22)}50%{box-shadow:0 6px 22px rgba(255,11,0,.45),0 4px 14px rgba(0,0,0,.22)}}
+.lim-pill::before,.lim-pill::after{content:'✦';position:absolute;top:50%;transform:translateY(-50%);color:#ffd54f;font-size:20px;font-weight:900}
+.lim-pill::before{left:-26px;animation:starFade 1.4s ease-in-out infinite}
+.lim-pill::after{right:-26px;animation:starFade 1.4s ease-in-out .7s infinite}
+@keyframes starFade{0%,100%{opacity:.4;transform:translateY(-50%) scale(.9)}50%{opacity:1;transform:translateY(-50%) scale(1.15)}}
+.lim-price{font-size:clamp(44px,13.5vw,84px);font-weight:900;letter-spacing:-.05em;line-height:1;font-style:italic;margin-bottom:22px;font-family:'Pretendard Variable',sans-serif;display:inline-block;background:linear-gradient(135deg,var(--ink) 0%,var(--ink) 30%,var(--red) 60%,#ff7a00 100%);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;padding-right:6px}
+.lim-quote{font-size:21px;color:var(--ink);font-weight:bold;letter-spacing:-.01em;line-height:1.5;padding:0 12px}
+.lim-quote .qm{color:var(--ink);font-size:32px;font-weight:900;vertical-align:-6px}
+.lim-quote .em{color:var(--red);font-weight:900;background:#fff3a0;padding:0 4px}
+
+@media(max-width:480px){
+  .lim-urgent p{font-size:19px}
+  .lim-lineup{font-size:24px}
+  .lim-subhead{font-size:16px}
+  .lim-galaxy{font-size:34px}
+  .lim-price{font-size:64px}
+  .lim-pill{font-size:21px;padding:10px 26px}
+  .lim-callout .l2{font-size:17px}
+  .lim-callout .l1{font-size:12px}
   .lim-medal{width:64px}
   .lim-medal>div{width:64px;height:64px}
   .lim-medal .med-text .s2{font-size:18px}
-  .lim-quote{font-size:15px}
+  .lim-quote{font-size:17px}
 }
 
 /* ============ 통신사 + 국가 승인 (Image #9) ============ */
-.official-sec{padding:24px 16px 18px;background:#fff;text-align:center;border-top:1px solid var(--bdr)}
-.official-sec .carriers{display:flex;justify-content:center;align-items:center;gap:30px;margin-bottom:18px;padding:14px 0}
-.official-sec .carriers img{height:36px;width:auto;object-fit:contain}
-.gov-box{border:1.5px solid var(--bdr);background:#fff;padding:14px;display:flex;align-items:center;gap:14px;text-align:left;max-width:560px;margin:0 auto}
-.gov-shield{flex-shrink:0;width:60px;text-align:center;line-height:1.1}
-.gov-shield svg{width:48px;height:48px;display:block;margin:0 auto 4px}
-.gov-shield .gov-lbl{font-size:11px;color:var(--ink);font-weight:bold}
-.gov-text{font-size:14px;color:var(--ink);line-height:1.55;font-weight:600}
-.gov-text b{color:var(--ink);font-weight:bold}
+.official-sec{padding:24px 16px 22px;background:#fff;text-align:center;border-top:1px solid var(--bdr)}
+.official-sec .carriers{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;gap:0;margin-bottom:22px;padding:4px 0;max-width:520px;margin-left:auto;margin-right:auto}
+.official-sec .carriers .cr-logo{height:108px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.official-sec .carriers .cr-logo img{max-height:100%;max-width:100%;width:auto;object-fit:contain;display:block}
+.official-sec .carriers .cr-logo.skt img{transform:scale(1.12)}
+.official-sec .carriers .cr-logo.kt  img{transform:scale(1.4)}
+.official-sec .carriers .cr-logo.lgu img{transform:scale(1)}
+
+.gov-box{border:1.5px solid var(--bdr);background:linear-gradient(180deg,#fff 0%,#fafafa 100%);padding:22px 18px;text-align:center;max-width:600px;margin:0 auto;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.gov-marks{display:flex;justify-content:center;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:nowrap}
+.gov-badge{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1.5px solid var(--ink);color:var(--ink);padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:-.02em;white-space:nowrap}
+.gov-badge .ck{color:var(--red);font-size:16px;line-height:1}
+.gov-badge.red{background:var(--red);border-color:var(--red);color:#fff}
+.gov-badge.red .ck{color:#ffd54f}
+.gov-text{font-size:17px;color:var(--ink);line-height:1.6;font-weight:600;margin:0}
+.gov-text b{color:var(--red);font-weight:900}
 
 @media(max-width:480px){
-  .official-sec .carriers{gap:20px}
-  .official-sec .carriers img{height:28px}
-  .gov-text{font-size:12.5px}
-  .gov-shield{width:50px}
-  .gov-shield svg{width:38px;height:38px}
+  .official-sec .carriers{padding:4px 0}
+  .official-sec .carriers .cr-logo{height:74px;padding:0 2px}
+  .gov-text{font-size:14.5px}
+  .gov-badge{font-size:10.5px;padding:5px 8px;gap:4px}
+  .gov-marks{gap:4px}
 }
 
 /* ============ 단독 특판 라인업 (Image #10) ============ */
@@ -132,20 +184,20 @@ ul,ol,li{list-style:none}
 .flag-img{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;padding:6px;background:#fff}
 .flag-img img{width:100%;height:100%;object-fit:contain}
 .flag-body{padding:12px;flex:1;display:flex;flex-direction:column}
-.flag-body h3{font-size:18px;font-weight:bold;text-align:center;margin-bottom:10px;color:var(--ink);letter-spacing:-.01em}
-.flag-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--sub);margin-bottom:3px;gap:4px;white-space:nowrap}
+.flag-body h3{font-size:21px;font-weight:bold;text-align:center;margin-bottom:12px;color:var(--ink);letter-spacing:-.01em}
+.flag-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--sub);margin-bottom:4px;gap:4px;white-space:nowrap}
 .flag-row s{color:#bbb}
-.flag-row.red{color:var(--ink);font-weight:bold;margin-bottom:10px}
+.flag-row.red{color:var(--ink);font-weight:bold;margin-bottom:12px}
 .flag-row.red b{color:var(--red);font-weight:bold}
-.flag-price{border-top:1px dashed var(--bdr);padding-top:8px;text-align:center;margin-top:auto}
-.flag-lbl{font-size:12px;color:var(--sub);font-weight:bold;margin-bottom:3px}
-.flag-amt{font-size:26px;font-weight:900;color:var(--red);letter-spacing:-.03em;line-height:1}
+.flag-price{border-top:1px dashed var(--bdr);padding-top:10px;text-align:center;margin-top:auto}
+.flag-lbl{font-size:13px;color:var(--sub);font-weight:bold;margin-bottom:4px}
+.flag-amt{font-size:30px;font-weight:900;color:var(--red);letter-spacing:-.03em;line-height:1}
 
 .promo-card{background:#000;color:#fff;border:1px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 10px;text-align:center}
-.promo-card .p1{font-size:18px;font-weight:bold;letter-spacing:-.02em;margin-bottom:6px}
-.promo-card .p2{font-size:34px;font-weight:bold;color:#ffd54f;letter-spacing:-.04em;line-height:1;margin-bottom:4px}
-.promo-card .p2 small{font-size:18px;color:#fff}
-.promo-card .p3{font-size:18px;font-weight:bold;color:var(--red);letter-spacing:-.02em;margin-top:4px}
+.promo-card .p1{font-size:21px;font-weight:bold;letter-spacing:-.02em;margin-bottom:8px}
+.promo-card .p2{font-size:40px;font-weight:900;color:#ffd54f;letter-spacing:-.04em;line-height:1;margin-bottom:6px}
+.promo-card .p2 small{font-size:20px;color:#fff}
+.promo-card .p3{font-size:21px;font-weight:bold;color:var(--red);letter-spacing:-.02em;margin-top:6px}
 
 .purple-note{margin-top:10px;max-width:760px;margin-left:auto;margin-right:auto;background:#7c3aed;color:#fff;border:1px solid #5b21b6;padding:14px;text-align:center;font-size:15px;font-weight:bold;letter-spacing:-.01em;line-height:1.55}
 .purple-note .y{color:#ffd54f}
@@ -158,76 +210,109 @@ ul,ol,li{list-style:none}
   .promo-card .p3{font-size:15px}
 }
 
-/* ============ 안내 / 한정특가 신청하기 — 박스 다 없애고 텍스트만으로 승부 ============ */
-.hint-sec{padding:36px 16px 24px;background:#fff;border-top:1px solid var(--bdr);text-align:center}
-.hint-top{margin-bottom:34px}
-.hint-top p{font-size:22px;font-weight:900;color:var(--ink);line-height:1.7;letter-spacing:-.02em}
-.hint-big{font-size:50px;font-weight:900;font-style:italic;color:var(--red);letter-spacing:-.03em;line-height:1.1;margin:18px 0 4px;background:linear-gradient(180deg,transparent 58%,#ffeb3b 58%,#ffeb3b 92%,transparent 92%);display:inline-block;padding:0 10px;font-family:'Pretendard Variable',sans-serif}
-.hint-sub{font-size:28px;font-weight:bold;color:var(--ink);letter-spacing:-.02em;line-height:1.45;margin:24px 0 16px}
-.hint-warn{font-size:14px;color:var(--red);font-weight:bold;margin-bottom:30px}
-.hint-cta-text{display:inline-block;font-size:40px;font-weight:900;color:var(--ink);text-decoration:underline;text-decoration-thickness:4px;text-underline-offset:8px;text-decoration-color:var(--ink);letter-spacing:-.03em;line-height:1.1;cursor:pointer;padding:8px 4px;margin-bottom:24px;font-family:'Pretendard Variable',sans-serif}
-.hint-cta-text:active{color:#444}
-.hint-nope-text{font-size:16px;font-weight:bold;color:var(--red);letter-spacing:-.01em;line-height:1.6}
+/* ============ 안내 / 한정특가 — 사이트 톤앤매너(검정·빨강·노랑) 컬러감 + 가독성 ============ */
+.hint-sec{padding:28px 16px 18px;background:#fff;border-top:1px solid var(--bdr);text-align:center}
+.hint-list{margin:0 auto 30px;max-width:580px;padding:8px 4px;display:flex;flex-direction:column;gap:12px}
+.hint-list .item{font-size:22px;font-weight:900;color:var(--ink);letter-spacing:-.02em;line-height:1.25;display:flex;align-items:center;justify-content:center;gap:14px;position:relative;background:linear-gradient(90deg,#fafafa 0%,#fff 100%);border-left:4px solid var(--ink);padding:14px 16px;border-radius:0 10px 10px 0;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.hint-list .item.r{border-left-color:var(--red)}
+.hint-list .item.b{border-left-color:var(--blue)}
+.hint-list .item .ic{font-size:34px;line-height:1;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.14))}
+.hint-list .item .tag{display:inline-flex;align-items:center;background:var(--ink);color:#fff;font-size:10.5px;font-weight:900;padding:3px 8px;border-radius:999px;letter-spacing:.04em;line-height:1;flex-shrink:0}
+.hint-list .item.r .tag{background:var(--red)}
+.hint-list .item.b .tag{background:var(--blue)}
+.hint-list .item .txt{text-align:center;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.hint-list .item b{color:var(--red)}
+.hint-list .item .blue{color:var(--blue);font-weight:900}
+.hint-list .item .x{color:var(--red);font-weight:900;margin:0 2px;display:inline-block;transform:scale(1.18)}
 
 @media(max-width:480px){
-  .hint-top p{font-size:17px}
-  .hint-big{font-size:36px}
+  .hint-list .item{font-size:16px;padding:11px 12px 11px 11px;gap:10px}
+  .hint-list .item .ic{font-size:26px}
+  .hint-list .item .tag{font-size:9.5px;padding:3px 7px}
+}
+.hint-big{font-size:clamp(34px,10vw,68px);font-weight:900;font-style:italic;color:var(--red);letter-spacing:-.035em;line-height:1.1;margin:20px 0 8px;display:inline-block;padding:0 10px;font-family:'Pretendard Variable',sans-serif;white-space:nowrap;position:relative;animation:hintGlow 1.4s ease-in-out infinite;text-shadow:2px 2px 0 rgba(0,0,0,.05)}
+@keyframes hintGlow{
+  0%,100%{filter:drop-shadow(0 0 0 transparent) brightness(1);transform:scale(1)}
+  40%{filter:drop-shadow(0 0 14px rgba(255,11,0,.6)) brightness(1.1);transform:scale(1.025)}
+  60%{filter:drop-shadow(0 0 22px rgba(255,11,0,.8)) brightness(1.15);transform:scale(1.035)}
+}
+.hint-big::before,.hint-big::after{content:'✦';position:absolute;color:#ffd54f;font-size:.45em;font-weight:900;top:50%;animation:sparkle 1s ease-in-out infinite}
+.hint-big::before{left:-.35em;transform:translateY(-50%);animation-delay:0s}
+.hint-big::after{right:-.35em;transform:translateY(-50%);animation-delay:.5s}
+@keyframes sparkle{0%,100%{opacity:.3;transform:translateY(-50%) scale(.7) rotate(0)}50%{opacity:1;transform:translateY(-50%) scale(1.2) rotate(45deg)}}
+.hint-sub{font-size:30px;font-weight:bold;color:var(--ink);letter-spacing:-.02em;line-height:1.45;margin:22px 0 16px}
+.hint-sub b{color:var(--blue)}
+.hint-warn{font-size:15px;color:var(--red);font-weight:bold;margin-bottom:24px;background:#fff5f5;display:inline-block;padding:7px 16px;border-radius:999px;border:1px solid #fecaca}
+.hint-cta{display:block;width:100%;background:var(--red);color:#fff;padding:26px 16px;font-size:30px;font-weight:900;text-align:center;letter-spacing:-.02em;cursor:pointer;font-family:inherit;line-height:1.15;margin-bottom:14px;border-radius:14px;box-shadow:0 6px 20px rgba(255,11,0,.32);position:relative;overflow:hidden}
+.hint-cta:active{background:#cc0900;transform:translateY(1px);box-shadow:0 3px 10px rgba(255,11,0,.32)}
+.hint-cta .arrow{display:inline-block;margin-right:6px;color:#ffe066}
+.hint-cta .small{display:block;font-size:14px;font-weight:bold;color:#ffe066;margin-top:8px;letter-spacing:.02em}
+.hint-nope{padding:14px 4px 0;text-align:center;font-size:17px;font-weight:bold;color:var(--ink);letter-spacing:-.01em;line-height:1.5;border-top:2px dashed #d0d0d0;margin-top:18px}
+.hint-nope .no{color:var(--red);font-weight:900;font-size:19px;margin-right:6px}
+.hint-nope b{color:var(--red);font-weight:900}
+
+@media(max-width:480px){
+  .hint-list .item{font-size:19px;gap:8px}
+  .hint-list .item .ic{font-size:17px}
+  .hint-big{font-size:42px}
   .hint-sub{font-size:22px}
-  .hint-cta-text{font-size:30px}
-  .hint-nope-text{font-size:14px}
+  .hint-cta{font-size:22px;padding:22px 14px}
+  .hint-cta .small{font-size:13px}
+  .hint-nope{font-size:14.5px}
+  .hint-nope .no{font-size:17px}
 }
 
 /* ============ 폼 (레퍼런스 스타일) ============ */
 .form-outer{padding:14px 16px 0;background:#fff}
 .form-inner{border:2px solid var(--ink);background:#fff;padding:18px}
-.form-h{text-align:center;font-size:20px;font-weight:bold;color:var(--ink);margin-bottom:4px;letter-spacing:-.02em}
-.form-sub{text-align:center;font-size:12px;color:var(--sub);margin-bottom:14px}
+.form-h{text-align:center;font-size:24px;font-weight:bold;color:var(--ink);margin-bottom:6px;letter-spacing:-.02em}
+.form-sub{text-align:center;font-size:14px;color:var(--sub);margin-bottom:16px}
 .fld{padding-bottom:10px}
-.input_style{width:100%;height:42px;border:1px solid #a0a0a0;text-indent:10px;font-family:inherit;font-size:15px;color:var(--ink);background:#fff;border-radius:3px;outline:none}
+.input_style{width:100%;height:46px;border:1px solid #a0a0a0;text-indent:10px;font-family:inherit;font-size:17px;color:var(--ink);background:#fff;border-radius:3px;outline:none}
 .input_style:focus{background:#FAFFBD}
 .input_style::placeholder{color:#d0d0d0}
 .tel-row{display:flex;align-items:center;gap:6px}
-.tel-row select,.tel-row input{height:42px;border:1px solid #a0a0a0;text-indent:10px;font-size:15px;font-family:inherit;color:var(--ink);background:#fff;border-radius:3px;outline:none;width:100%}
+.tel-row select,.tel-row input{height:46px;border:1px solid #a0a0a0;text-indent:10px;font-size:17px;font-family:inherit;color:var(--ink);background:#fff;border-radius:3px;outline:none;width:100%}
 .tel-row select{width:84px;flex-shrink:0}
 .tel-row input{flex:1}
 .tel-row input:focus,.tel-row select:focus{background:#FAFFBD}
 .tel-row .dash{font-size:12px;color:var(--ink);font-weight:bold}
-.radio-title{font-size:14px;font-weight:bold;color:var(--ink);margin-bottom:6px}
+.radio-title{font-size:16px;font-weight:bold;color:var(--ink);margin-bottom:8px}
 .radio-row{display:flex;gap:6px}
-.radio-row .rb{flex:1;padding:11px 0;border:1px solid #a0a0a0;background:#fff;color:var(--ink);font-size:15px;font-weight:bold;cursor:pointer;text-align:center;font-family:inherit;border-radius:3px}
+.radio-row .rb{flex:1;padding:13px 0;border:1px solid #a0a0a0;background:#fff;color:var(--ink);font-size:17px;font-weight:bold;cursor:pointer;text-align:center;font-family:inherit;border-radius:3px}
 .radio-row .rb.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-.agree-row{padding:8px 0 12px;font-size:14px;color:var(--ink)}
+.agree-row{padding:8px 0 14px;font-size:16px;color:var(--ink)}
 .agree-row label{display:inline-block;position:relative;padding:3px 0 0 26px;cursor:pointer}
 .agree-row input[type="checkbox"]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0)}
 .agree-row input[type="checkbox"]+label:before{content:'';position:absolute;left:0;top:3px;width:15px;height:15px;background:#fff;border:1px solid #ccc;box-sizing:border-box;border-radius:3px}
 .agree-row input[type="checkbox"]:checked+label:after{content:'\2713';position:absolute;top:3px;left:0;width:15px;height:15px;background:var(--red);color:#fff;text-align:center;border-radius:3px;font-size:12px;font-weight:bold;line-height:15px}
 .agree-row .pop{margin-left:6px;color:var(--blue);cursor:pointer;font-weight:bold;text-decoration:underline}
-.main_button{height:56px;line-height:56px;background:var(--blue);text-align:center;border-radius:5px;cursor:pointer}
-.main_button a{color:#fff;font-weight:bold;display:block;font-size:18px}
-.main_button:active{background:#0d4ba8}
+.main_button{height:62px;line-height:62px;background:var(--ink);text-align:center;border-radius:5px;cursor:pointer}
+.main_button a{color:#fff;font-weight:bold;display:block;font-size:21px}
+.main_button:active{background:#333}
 .fok{display:none;text-align:center;padding:24px 10px}
 .fok .msg{font-size:18px;font-weight:bold;margin-bottom:6px;color:var(--blue)}
 .fok .msg2{font-size:13px;color:var(--ink)}
 
 /* ============ 실시간 ============ */
 .live{padding:14px 16px 0}
-.live-title-box{background:var(--blue);color:#fff;font-size:15px;font-weight:bold;text-align:center;padding:10px 12px;border-radius:5px 5px 0 0}
+.live-title-box{background:var(--red);color:#fff;font-size:18px;font-weight:bold;text-align:center;padding:12px 12px;border-radius:5px 5px 0 0}
 .live-head{display:grid;grid-template-columns:50% 50%;border-left:1px solid #d0d0d0;border-right:1px solid #d0d0d0}
-.live-head>div{padding:8px 12px;border-bottom:1px solid #d0d0d0;text-align:center;font-size:13px;font-weight:bold;color:var(--ink);background:#f7f7f7}
+.live-head>div{padding:10px 12px;border-bottom:1px solid #d0d0d0;text-align:center;font-size:15px;font-weight:bold;color:var(--ink);background:#f7f7f7}
 .live-head>div:first-child{border-right:1px solid #d0d0d0}
 .roll-wrap{border:1px solid #d0d0d0;border-top:none;border-radius:0 0 5px 5px;height:280px;overflow:hidden;background:#fff;position:relative}
 #rollList{transition:transform .5s ease}
 #rollList>div{display:grid;grid-template-columns:50% 50%;border-bottom:1px solid #eee}
-#rollList>div>span{padding:10px 12px;text-align:center;font-size:13.5px;color:var(--ink)}
+#rollList>div>span{padding:12px 12px;text-align:center;font-size:15px;color:var(--ink)}
 #rollList>div>span:first-child{border-right:1px solid #eee;font-weight:bold}
 
 /* ============ 푸터 ============ */
-.main_copyright{line-height:20px;text-align:center;padding:18px 10px 80px;font-size:12px;color:#666}
+.main_copyright{line-height:22px;text-align:center;padding:20px 10px 90px;font-size:14px;color:#666}
 .main_copyright b{color:var(--ink)}
 
 /* 플로팅 CTA */
-.float-cta{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--ink);padding:8px 10px env(safe-area-inset-bottom,8px);z-index:100}
-.float-cta a{display:block;max-width:800px;margin:0 auto;padding:14px;background:#000;color:#fff;border:2px solid #000;font-size:18px;font-weight:bold;text-align:center}
+.float-cta{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bdr);padding:8px 10px env(safe-area-inset-bottom,8px);z-index:100}
+.float-cta a{display:block;max-width:800px;margin:0 auto;padding:16px;background:var(--ink);color:#fff;font-size:20px;font-weight:bold;text-align:center;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.22)}
 </style>
 </head>
 <body>
@@ -242,33 +327,60 @@ ul,ol,li{list-style:none}
 
 <!-- ===== 마감임박 바 ===== -->
 <div class="lim-urgent">
-  <p><span class="hl">마감 임박!</span> 마감 이후 혜택이 종료됩니다</p>
+  <p><span class="hl">🔥 오늘 마감!</span> 자정 이후 <span class="hl">가격 즉시 인상</span></p>
 </div>
 
 <!-- ===== 배너 1 — 단독한정 특가 + 시리즈 폰 + 메달 + 콜아웃 + 가격 ===== -->
 <section class="limited-sec">
   <div class="c">
-    <p class="lim-lineup">Galaxy S26 <span>|</span> S26+ <span>|</span> S26 Ultra</p>
-    <h2 class="lim-title">단독한정 특가</h2>
+    <p class="lim-lineup"><span>Galaxy S26</span><span class="dot">·</span><span>S26+</span><span class="dot">·</span><span>S26 Ultra</span></p>
+    <div class="lim-title-wrap"><h2 class="lim-title">공식 도매특가</h2></div>
+    <p class="lim-subhead">갤럭시 S26 시리즈 — 본사 직영가 그대로</p>
 
     <div class="lim-hero-wrap">
-      <img src="../s26_lineup_clean_v4.jpg" alt="Galaxy S26 시리즈">
-      <div class="lim-medal">
-        <div>
-          <svg class="med" viewBox="0 0 68 68">
-            <defs>
-              <radialGradient id="gmed" cx="40%" cy="35%">
-                <stop offset="0%" stop-color="#fff3c4"/>
-                <stop offset="55%" stop-color="#ffc94a"/>
-                <stop offset="100%" stop-color="#c08113"/>
-              </radialGradient>
-            </defs>
-            <circle cx="34" cy="34" r="30" fill="url(#gmed)" stroke="#fff" stroke-width="3"/>
-            <circle cx="34" cy="34" r="25" fill="none" stroke="#a97310" stroke-width="1" stroke-dasharray="2,2" opacity=".55"/>
-          </svg>
-          <div class="med-text"><span class="s1">전국판매</span><span class="s2">1위</span></div>
-        </div>
-        <svg class="ribbon" viewBox="0 0 40 20"><path d="M2 0 L20 16 L38 0 L34 18 L20 10 L6 18 Z" fill="#c58515"/><path d="M2 0 L20 16 L38 0 L20 6 Z" fill="#e4a02a"/></svg>
+      <img class="hero-phone" src="../galaxy_s26_hero.png?v=3" alt="Galaxy S26 시리즈">
+      <div class="hero-medal" aria-label="전국 판매 1위">
+        <svg viewBox="0 0 200 200">
+          <defs>
+            <radialGradient id="goldGrad" cx="38%" cy="32%">
+              <stop offset="0%" stop-color="#fff7c0"/>
+              <stop offset="30%" stop-color="#ffe066"/>
+              <stop offset="70%" stop-color="#f5b800"/>
+              <stop offset="100%" stop-color="#a0700a"/>
+            </radialGradient>
+            <radialGradient id="goldInner" cx="35%" cy="30%">
+              <stop offset="0%" stop-color="#fff6b0"/>
+              <stop offset="100%" stop-color="#e8a800"/>
+            </radialGradient>
+          </defs>
+          <g transform="translate(100 100)">
+            <g id="medalStar">
+              <path d="M0 -94 L6 -84 L18 -90 L18 -78 L30 -78 L24 -68 L34 -62 L24 -56 L30 -46 L18 -46 L18 -34 L6 -40 L0 -30 L-6 -40 L-18 -34 L-18 -46 L-30 -46 L-24 -56 L-34 -62 L-24 -68 L-30 -78 L-18 -78 L-18 -90 L-6 -84 Z" fill="#f5b800"/>
+            </g>
+            <use href="#medalStar" transform="rotate(15)"/>
+            <use href="#medalStar" transform="rotate(30)"/>
+            <use href="#medalStar" transform="rotate(45)"/>
+            <use href="#medalStar" transform="rotate(60)"/>
+            <use href="#medalStar" transform="rotate(75)"/>
+            <use href="#medalStar" transform="rotate(90)"/>
+            <use href="#medalStar" transform="rotate(105)"/>
+            <use href="#medalStar" transform="rotate(120)"/>
+            <use href="#medalStar" transform="rotate(135)"/>
+            <use href="#medalStar" transform="rotate(150)"/>
+            <use href="#medalStar" transform="rotate(165)"/>
+          </g>
+          <circle cx="100" cy="100" r="78" fill="url(#goldGrad)" stroke="#a0700a" stroke-width="1.5"/>
+          <circle cx="100" cy="100" r="64" fill="url(#goldInner)" stroke="#fff7c0" stroke-width="2.5"/>
+          <circle cx="100" cy="100" r="60" fill="none" stroke="#a0700a" stroke-width=".8" stroke-dasharray="3,2.5" opacity=".55"/>
+          <!-- laurel left -->
+          <path d="M48 100 Q42 80 50 60 Q56 70 56 88 M50 78 Q44 84 38 84 M52 92 Q44 98 38 96" stroke="#a0700a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M52 110 Q46 122 52 138 Q58 130 58 116 M52 122 Q46 124 40 122" stroke="#a0700a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- laurel right -->
+          <path d="M152 100 Q158 80 150 60 Q144 70 144 88 M150 78 Q156 84 162 84 M148 92 Q156 98 162 96" stroke="#a0700a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M148 110 Q154 122 148 138 Q142 130 142 116 M148 122 Q154 124 160 122" stroke="#a0700a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <text x="100" y="92" text-anchor="middle" font-family="'Pretendard Variable',sans-serif" font-weight="900" font-size="20" fill="#fff" letter-spacing="-.04em">전국 판매</text>
+          <text x="100" y="128" text-anchor="middle" font-family="'Pretendard Variable',sans-serif" font-weight="900" font-size="42" fill="#fff" letter-spacing="-.04em">1위</text>
+        </svg>
       </div>
     </div>
 
@@ -277,15 +389,17 @@ ul,ol,li{list-style:none}
     <div class="lim-conn">
       <div class="row">
         <div class="lim-callout y">
+          <span class="badge">STEP 1</span>
           <span class="l1">통신사 별</span>
           <span class="l2">추가할인금액</span>
         </div>
         <div class="lim-callout b">
+          <span class="badge">STEP 2</span>
           <span class="l1">도매코드</span>
           <span class="l2">특판할인 추가</span>
         </div>
+        <div class="lim-plus">+</div>
       </div>
-      <div class="lim-h"></div>
       <div class="lim-v"></div>
       <div class="lim-arrow"></div>
     </div>
@@ -293,7 +407,7 @@ ul,ol,li{list-style:none}
     <div class="lim-pill">도매한정특가</div>
     <div><span class="lim-price">22,000원!</span></div>
     <p class="lim-quote">
-      <span class="qm">"</span>이벤트기간 이후 프로모션은 <span class="em">즉시 종료됩니다</span><span class="qm">"</span>
+      <span class="qm">"</span>도매 재고 소진 시 — 본 행사 <span class="em">즉시 마감</span><span class="qm">"</span>
     </p>
   </div>
 </section>
@@ -301,19 +415,17 @@ ul,ol,li{list-style:none}
 <!-- ===== 배너 1-끝 — 통신사 + 국가 승인 ===== -->
 <section class="official-sec">
   <div class="carriers">
-    <img src="../skt_logo_new.png" alt="SKT" onerror="this.outerHTML='<span style=\'font-size:22px;font-weight:bold;color:#e6002d\'>SKT</span>'">
-    <img src="../kt_logo_new.png" alt="kt" onerror="this.outerHTML='<span style=\'font-size:22px;font-weight:bold;color:#000\'>kt</span>'">
-    <img src="../lgu_logo_new.png" alt="LG U+" onerror="this.outerHTML='<span style=\'font-size:22px;font-weight:bold;color:#e6007e\'>LG U+</span>'">
+    <span class="cr-logo skt"><img src="../skt_logo_v2.png" alt="SKT"></span>
+    <span class="cr-logo kt"><img src="../kt_logo_v2.webp" alt="kt"></span>
+    <span class="cr-logo lgu"><img src="../lgu_logo_v2.svg" alt="LG U+"></span>
   </div>
   <div class="gov-box">
-    <div class="gov-shield">
-      <svg viewBox="0 0 24 24" fill="#1562CF" stroke="#fff" stroke-width="0">
-        <path d="M12 1 L3 5 v6 c0 5.5 3.8 10.3 9 12 5.2-1.7 9-6.5 9-12 V5 z"/>
-        <path d="M9 12 L11 14 L16 9" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <div class="gov-lbl">국가 승인<br>판매점</div>
+    <div class="gov-marks">
+      <span class="gov-badge red"><span class="ck">✔</span> 통신3사 본사 공식 인증</span>
+      <span class="gov-badge"><span class="ck">🏆</span> 본사 도매 직거래</span>
+      <span class="gov-badge"><span class="ck">🛡</span> 정식 등록 사업자</span>
     </div>
-    <div class="gov-text">대한민국에서 공식 승인한 <b>온라인 공식 판매점</b>으로<br><b>전국 판매1위 지점</b>에서 진행하는 <b>특판할인 이벤트</b>입니다</div>
+    <p class="gov-text">정식 등록 사업자가 진행하는 <b>갤럭시 S26 전용 도매가</b><br>본사 직거래 — 단독 특판 이벤트</p>
   </div>
 </section>
 
@@ -356,16 +468,30 @@ ul,ol,li{list-style:none}
   </div>
 </section>
 
-<!-- ===== 배너 3 — 안내 + 한정특가 (박스 없이 텍스트 임팩트) ===== -->
+<!-- ===== 배너 3 — 안내 + 한정특가 (사이트 톤·컬러감 + 가독성) ===== -->
 <section class="hint-sec">
-  <div class="hint-top">
-    <p>역대급 사은품증정<br>도매특가 프로모션 추가할인<br>반납X 부가X 장기할부X</p>
+  <div class="hint-list">
+    <div class="item r">
+      <span class="ic">🎁</span>
+      <span class="txt"><span class="tag">SPECIAL</span><b>풀세트</b> 사은품 <b>무상증정</b></span>
+    </div>
+    <div class="item b">
+      <span class="ic">💯</span>
+      <span class="txt"><span class="tag">DOUBLE</span>도매가 <span class="blue">＋ 프로모션 중복할인</span></span>
+    </div>
+    <div class="item">
+      <span class="ic">🚫</span>
+      <span class="txt"><span class="tag">N O</span>반납<span class="x">X</span> · 부가<span class="x">X</span> · 장기할부<span class="x">X</span></span>
+    </div>
   </div>
-  <div><span class="hint-big">지금 이 페이지서만!!</span></div>
-  <p class="hint-sub">지금 보신 가격 그대로<br>갤럭시 S26 최저가로 드립니다.</p>
-  <p class="hint-warn">※ 선착순 한정 혜택으로 이벤트는 조기종료 될 수 있습니다.</p>
-  <div><a href="#apply" class="hint-cta-text">▶ 한정특가 신청하기</a></div>
-  <p class="hint-nope-text">신용불량자, 연체, 고액미납자는 신청이 불가합니다</p>
+  <div><span class="hint-big">딱! 여기서만 이 가격!!</span></div>
+  <p class="hint-sub">지금 보신 가격 그대로<br><b>갤럭시 S26</b> 최저가로 드립니다.</p>
+  <p class="hint-warn">※ 도매 재고 한정 — 소진 시 마감 처리</p>
+  <a href="#apply" class="hint-cta">
+    <span class="arrow">▶</span> 한정특가 신청하기
+    <span class="small">단독특가 22,000원~ · 익일 상담 연락</span>
+  </a>
+  <p class="hint-nope"><span class="no">⚠</span> <b>신용불량자 · 연체 · 고액미납자</b>는 신청이 불가합니다</p>
 </section>
 
 <a id="apply"></a>
@@ -440,6 +566,61 @@ ul,ol,li{list-style:none}
 <script>
 function pickC(el){document.querySelectorAll('.rb').forEach(b=>b.classList.remove('active'));el.classList.add('active')}
 function submitDB(e){e.preventDefault();const name=document.getElementById('dbName').value.trim();if(!name||name.length<2){alert('이름을 정확히 입력해 주세요');document.getElementById('dbName').focus();return false}const p1=document.getElementById('dbPhone1').value.trim();const p2=document.getElementById('dbPhone2').value.trim();if(!/^\d{3,4}$/.test(p1)){alert('연락처 가운데 4자리를 정확히 입력해 주세요');document.getElementById('dbPhone1').focus();return false}if(!/^\d{4}$/.test(p2)){alert('연락처 끝 4자리를 정확히 입력해 주세요');document.getElementById('dbPhone2').focus();return false}const cEl=document.querySelector('.rb.active');if(!cEl){alert('통신사를 선택해 주세요');return false}const model=document.getElementById('dbModel').value;if(!model){alert('희망 기종을 선택해 주세요');document.getElementById('dbModel').focus();return false}if(!document.getElementById('dbAgree').checked){alert('개인정보 수집·이용에 동의해 주세요');return false}const d={source:'D',name,phone:document.getElementById('dbPrefix').value+'-'+p1+'-'+p2,carrier:cEl.textContent,model};const btn=document.querySelector('.main_button a');const oldT=btn?btn.textContent:'';if(btn){btn.style.pointerEvents='none';btn.textContent='신청 중...'}fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(function(){window.location.href='/demand_finish/'}).catch(function(err){alert('신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.\n('+err.message+')');if(btn){btn.style.pointerEvents='auto';btn.textContent=oldT||'휴대폰 단독특가 신청'}});return false}
+
+// hero 폰 PNG 흰 배경 → 투명 + 가장자리 부드럽게 (스크래치 제거)
+(function(){
+  const el = document.querySelector('.hero-phone');
+  if(!el) return;
+  const src = el.getAttribute('src');
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function(){
+    try{
+      const cv = document.createElement('canvas');
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      const ctx = cv.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const d = ctx.getImageData(0,0,cv.width,cv.height);
+      const a = d.data;
+      const HARD = 250;   // 이 이상은 완전 투명
+      const SOFT = 232;   // 이 이하는 그대로 유지
+      for(let i=0;i<a.length;i+=4){
+        const r=a[i],g=a[i+1],b=a[i+2];
+        const m = Math.min(r,g,b);
+        if(m>=HARD){ a[i+3]=0; }
+        else if(m>=SOFT){
+          // 가장자리 안티앨리어싱: 232→불투명, 250→투명, 그 사이 비례
+          const t = (m - SOFT) / (HARD - SOFT);
+          a[i+3] = Math.round(a[i+3] * (1 - t));
+        }
+      }
+      ctx.putImageData(d,0,0);
+      el.src = cv.toDataURL('image/png');
+    }catch(e){}
+  };
+  img.src = src;
+})();
+
+// 헤드 "공식 도매특가" — italic 컨테이너 폭에 맞춰 자동 fit (양 끝 닿음, 짤림 방지)
+// italic 글자는 scrollWidth보다 시각 폭이 더 큼 → getBoundingClientRect 로 정확 측정
+function fitTitle(){
+  const el = document.querySelector('.lim-title');
+  const wrap = document.querySelector('.lim-title-wrap');
+  if(!el || !wrap) return;
+  const SAFE = 14; // italic 우측 돌출 + 안전 마진
+  const max = wrap.clientWidth - SAFE;
+  let size = 100;
+  el.style.fontSize = size + 'px';
+  // 측정용 함수: getBoundingClientRect의 width 가 italic 시각 폭 반영
+  const w = () => el.getBoundingClientRect().width;
+  while (w() > max && size > 22) { size -= 1; el.style.fontSize = size + 'px'; }
+  while (w() < max - 2 && size < 140) { size += 1; el.style.fontSize = size + 'px'; }
+  while (w() > max && size > 22) { size -= 1; el.style.fontSize = size + 'px'; }
+}
+fitTitle();
+window.addEventListener('resize', fitTitle);
+// 폰트 로드 후 한 번 더
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
 
 const names=['김**','이**','박**','최**','정**','강**','조**','윤**','장**','임**','한**','오**','서**','신**','권**','황**','안**','송**','전**','홍**','문**','차*복','정*원','박*영','이*호'];
 function genRow(){
