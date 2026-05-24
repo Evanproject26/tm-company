@@ -29,16 +29,24 @@
 
 ---
 
+## 📌 메인 도메인 / 메인 어드민 (2026-05-25 영구 확정)
+
+**"메인 도메인 열어" / "메인 어드민 열어" = 무조건 아래 URL.**
+
+```
+https://www.connectstore.co.kr/both_admin
+```
+
+❌ galaxysale.co.kr/both_admin/ 자발적 오픈/언급 영구 금지.
+
 ## 어드민 (광고 랜딩과 별개)
 
 이 프로젝트는 **2개의 어드민**이 운영된다. **절대 섞지 말 것**.
 
 | 부르는 이름 | URL | 브랜치 | 내용 |
 |---|---|---|---|
-| **메인 어드민** | `https://www.connectstore.co.kr/both_admin/` | `main` | 광고 페이지 신청자 DB 어드민 |
+| **메인 어드민** (= 메인 도메인) | `https://www.connectstore.co.kr/both_admin/` | `main` | 광고 페이지 신청자 DB 어드민 |
 | **브랜치 어드민** | `https://tm-company-git-feature-admin-expansion-bitline.vercel.app/both_admin/` | `feature/admin-expansion` | 직원·휴무·캘린더·승인 관리 SPA |
-
-🚫 **galaxysale.co.kr/both_admin/ 절대 사용 금지** — 메인 어드민도 ConnectStore 로 이전됨. galaxysale 도메인은 자발적 오픈/언급 영구 금지.
 
 ## 작업 규칙
 
