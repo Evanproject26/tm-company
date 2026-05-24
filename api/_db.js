@@ -61,7 +61,7 @@ export async function ensureSchema() {
   await sql`
     CREATE TABLE IF NOT EXISTS applications (
       id SERIAL PRIMARY KEY,
-      source TEXT NOT NULL CHECK (source IN ('A','B')),
+      source TEXT NOT NULL CHECK (source IN ('A','B','C','D','E','F')),
       name TEXT NOT NULL,
       phone TEXT NOT NULL,
       carrier TEXT,
@@ -70,6 +70,9 @@ export async function ensureSchema() {
     )
   `;
   await sql`ALTER TABLE applications ADD COLUMN IF NOT EXISTS downloaded_at TIMESTAMPTZ NULL`;
+  // source 허용값 확장 (기존 A/B → A~F). 옛 constraint 제거 후 재생성.
+  await sql`ALTER TABLE applications DROP CONSTRAINT IF EXISTS applications_source_check`;
+  await sql`ALTER TABLE applications ADD CONSTRAINT applications_source_check CHECK (source IN ('A','B','C','D','E','F'))`;
   await sql`CREATE INDEX IF NOT EXISTS idx_apps_created ON applications (created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_apps_source ON applications (source)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_apps_downloaded ON applications (downloaded_at)`;
