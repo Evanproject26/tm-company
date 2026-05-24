@@ -10,7 +10,8 @@ export default async function handler(req, res) {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const { source, name, phone, carrier, model } = body;
 
-    if (!source || (source !== 'A' && source !== 'B')) return res.status(400).json({ error: 'invalid source' });
+    const ALLOWED_SOURCES = ['A', 'B', 'C', 'D', 'E', 'F'];
+    if (!source || !ALLOWED_SOURCES.includes(source)) return res.status(400).json({ error: 'invalid source' });
     if (!name || String(name).trim().length < 2) return res.status(400).json({ error: 'invalid name' });
     if (!phone || String(phone).length < 9) return res.status(400).json({ error: 'invalid phone' });
 

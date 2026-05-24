@@ -33,14 +33,30 @@ export default async function handler(req, res) {
       LIMIT 5000
     `;
 
+    // source 코드 → 어드민 라벨 매핑
+    // A: 기존 apply_google_kpi (비공개 처리됨)
+    // B: 기존 apply_google_demand (삭제됨)
+    // C: apply_google3 / D: apply_google4
+    // E: apply_kpi_max / F: apply_demand (신규 활성 랜딩)
+    const SRC_MAP = {
+      A: { code: 'SELF_KPI',       label: 'KPI(자체)',      color: '#7c3aed' },
+      B: { code: 'SELF_DEMAND',    label: 'Demand(자체)',   color: '#0ea5e9' },
+      C: { code: 'SELF_GOOGLE3',   label: 'google3',        color: '#16a34a' },
+      D: { code: 'SELF_GOOGLE4',   label: 'google4',        color: '#f59e0b' },
+      E: { code: 'SELF_KPI_MAX',   label: 'kpi_max',        color: '#db2777' },
+      F: { code: 'SELF_DEMAND_NEW',label: 'demand',         color: '#0891b2' },
+    };
+
     // 정규화: 둘 다 동일 형태로
-    const normalizedApps = apps.map(a => ({
+    const normalizedApps = apps.map(a => {
+      const m = SRC_MAP[a.source] || { code: 'UNKNOWN', label: a.source || '?', color: '#6b7280' };
+      return {
       id: 'A' + a.id,
       origin: 'application',
-      source: a.source,                                // 'A' or 'B' (legacy)
-      source_code: a.source === 'A' ? 'SELF_KPI' : 'SELF_DEMAND',
-      source_label: a.source === 'A' ? 'KPI(자체)' : 'Demand(자체)',
-      source_color: a.source === 'A' ? '#7c3aed' : '#0ea5e9',
+      source: a.source,
+      source_code: m.code,
+      source_label: m.label,
+      source_color: m.color,
       name: a.name,
       phone: a.phone,
       carrier: a.carrier,
@@ -49,7 +65,8 @@ export default async function handler(req, res) {
       downloaded_at: a.downloaded_at,
       assigned_name: null,
       status: a.downloaded_at ? 'DONE' : 'NEW'
-    }));
+      };
+    });
 
     const normalizedPool = pool.map(p => ({
       id: 'P' + p.id,
