@@ -35,10 +35,10 @@
 
 | 부르는 이름 | URL | 브랜치 | 내용 |
 |---|---|---|---|
-| **메인 어드민** | `https://galaxysale.co.kr/both_admin/` | `main` | 광고 페이지 신청자 DB 어드민 |
+| **메인 어드민** | `https://www.connectstore.co.kr/both_admin/` | `main` | 광고 페이지 신청자 DB 어드민 |
 | **브랜치 어드민** | `https://tm-company-git-feature-admin-expansion-bitline.vercel.app/both_admin/` | `feature/admin-expansion` | 직원·휴무·캘린더·승인 관리 SPA |
 
-※ 어드민은 아직 galaxysale.co.kr 사용 중 (랜딩만 connectstore.co.kr 로 이전됨)
+🚫 **galaxysale.co.kr/both_admin/ 절대 사용 금지** — 메인 어드민도 ConnectStore 로 이전됨. galaxysale 도메인은 자발적 오픈/언급 영구 금지.
 
 ## 작업 규칙
 
