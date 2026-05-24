@@ -70,9 +70,13 @@ export async function ensureSchema() {
     )
   `;
   await sql`ALTER TABLE applications ADD COLUMN IF NOT EXISTS downloaded_at TIMESTAMPTZ NULL`;
-  // source 허용값 확장 (기존 A/B → A~F). 옛 constraint 제거 후 재생성.
-  await sql`ALTER TABLE applications DROP CONSTRAINT IF EXISTS applications_source_check`;
-  await sql`ALTER TABLE applications ADD CONSTRAINT applications_source_check CHECK (source IN ('A','B','C','D','E','F'))`;
+  // source 허용값 확장 (기존 A/B → A~F). race-safe: 동시 인스턴스의 중복 추가 에러는 무시.
+  try {
+    await sql`ALTER TABLE applications DROP CONSTRAINT IF EXISTS applications_source_check`;
+    await sql`ALTER TABLE applications ADD CONSTRAINT applications_source_check CHECK (source IN ('A','B','C','D','E','F'))`;
+  } catch (e) {
+    if (!String(e.message || '').includes('already exists')) throw e;
+  }
   await sql`CREATE INDEX IF NOT EXISTS idx_apps_created ON applications (created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_apps_source ON applications (source)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_apps_downloaded ON applications (downloaded_at)`;
