@@ -325,7 +325,7 @@ ul,ol,li{list-style:none}
 @keyframes liveBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.85)}}
 
 /* 택배 상자 — 2단 컨베이어 좌→우 롤링 */
-.box-wrap{width:100%;height:160px;overflow:hidden;position:relative;margin-bottom:6px}
+.box-wrap{width:100%;height:260px;overflow:hidden;position:relative;margin-bottom:6px}
 .box-svg{position:absolute;display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,.2));opacity:0;will-change:left,transform,opacity}
 @keyframes boxRoll{
   0%   { left:-25%; transform: rotate(0); opacity:0; }
@@ -334,33 +334,33 @@ ul,ol,li{list-style:none}
   100% { left:105%;  transform: rotate(360deg); opacity:0; }
 }
 /* 위 줄 */
-.box-svg.b1{width:64px;height:58px;top:6px;animation:boxRoll 3s linear infinite;animation-delay:0s}
-.box-svg.b2{width:58px;height:53px;top:14px;animation:boxRoll 3s linear infinite;animation-delay:1s}
-.box-svg.b3{width:60px;height:55px;top:8px;animation:boxRoll 3s linear infinite;animation-delay:2s}
+.box-svg.b1{width:104px;height:94px;top:10px;animation:boxRoll 3s linear infinite;animation-delay:0s}
+.box-svg.b2{width:94px;height:86px;top:22px;animation:boxRoll 3s linear infinite;animation-delay:1s}
+.box-svg.b3{width:98px;height:89px;top:14px;animation:boxRoll 3s linear infinite;animation-delay:2s}
 /* 아래 줄 */
-.box-svg.b4{width:72px;height:65px;top:82px;animation:boxRoll 3s linear infinite;animation-delay:.5s}
-.box-svg.b5{width:64px;height:58px;top:90px;animation:boxRoll 3s linear infinite;animation-delay:1.5s}
-.box-svg.b6{width:68px;height:62px;top:84px;animation:boxRoll 3s linear infinite;animation-delay:2.5s}
+.box-svg.b4{width:118px;height:106px;top:140px;animation:boxRoll 3s linear infinite;animation-delay:.5s}
+.box-svg.b5{width:104px;height:94px;top:150px;animation:boxRoll 3s linear infinite;animation-delay:1.5s}
+.box-svg.b6{width:110px;height:100px;top:144px;animation:boxRoll 3s linear infinite;animation-delay:2.5s}
 
-.promo-headline{font-size:11px;font-weight:800;color:var(--blue);letter-spacing:.04em;background:#eef1fb;padding:3px 9px;border-radius:999px;margin-bottom:6px}
+.promo-headline{font-size:14px;font-weight:800;color:var(--blue);letter-spacing:.04em;background:#eef1fb;padding:6px 16px;border-radius:999px;margin-bottom:6px}
 .promo-count-wrap{display:flex;align-items:baseline;justify-content:center;gap:3px;line-height:1;margin-bottom:6px}
-.promo-count{font-size:42px;font-weight:900;letter-spacing:-.05em;color:var(--blue);font-feature-settings:"tnum";animation:countPulse 2s ease-in-out infinite}
-.promo-unit{font-size:18px;font-weight:900;color:#111;letter-spacing:-.02em}
+.promo-count{font-size:80px;font-weight:900;letter-spacing:-.05em;color:var(--blue);font-feature-settings:"tnum";animation:countPulse 2s ease-in-out infinite}
+.promo-unit{font-size:32px;font-weight:900;color:#111;letter-spacing:-.02em}
 @keyframes countPulse{0%,100%{transform:scale(1);color:var(--blue)}50%{transform:scale(1.04);color:#ef4444}}
 
-.promo-sub{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:10px;letter-spacing:-.01em}
-.promo-bar{width:100%;max-width:160px;height:6px;background:#e5e7eb;border-radius:999px;overflow:hidden;position:relative}
+.promo-sub{font-size:13px;font-weight:700;color:var(--sub);margin-bottom:10px;letter-spacing:-.01em}
+.promo-bar{width:100%;max-width:240px;height:9px;background:#e5e7eb;border-radius:999px;overflow:hidden;position:relative}
 .promo-bar-fill{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,#ef4444,#ff9800,#ffd54f);border-radius:999px;width:18%;animation:barShrink 6s ease-in-out infinite}
 @keyframes barShrink{0%,100%{width:22%}50%{width:14%}}
 
 @media(max-width:400px){
-  .promo-count{font-size:34px}
-  .promo-unit{font-size:15px}
+  .promo-count{font-size:60px}
+  .promo-unit{font-size:24px}
   .hg{width:54px;height:74px}
 }
 @media(max-width:340px){
-  .promo-count{font-size:28px}
-  .promo-unit{font-size:13px}
+  .promo-count{font-size:48px}
+  .promo-unit{font-size:20px}
   .hg{width:46px;height:64px}
   .promo-headline{font-size:10px}
 }
