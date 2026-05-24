@@ -592,15 +592,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="form-sub">연락처 남기면 전담 상담사가 익일 연락드립니다</div>
     <form id="dbForm" onsubmit="return submitDB(event)">
       <div class="fld">
-        <input type="text" id="dbName" class="input_style" placeholder="이름" autocomplete="off">
+        <input type="text" id="dbName" class="input_style" placeholder="이름" autocomplete="off" required minlength="2">
       </div>
       <div class="fld">
         <div class="tel-row">
           <select id="dbPrefix"><option>010</option><option>011</option><option>016</option></select>
           <span class="dash">-</span>
-          <input type="tel" id="dbPhone1" placeholder="연락처" maxlength="4" pattern="[0-9]*" inputmode="numeric">
+          <input type="tel" id="dbPhone1" placeholder="연락처" maxlength="4" minlength="3" pattern="[0-9]{3,4}" inputmode="numeric" required>
           <span class="dash">-</span>
-          <input type="tel" id="dbPhone2" placeholder="연락처" maxlength="4" pattern="[0-9]*" inputmode="numeric">
+          <input type="tel" id="dbPhone2" placeholder="연락처" maxlength="4" minlength="4" pattern="[0-9]{4}" inputmode="numeric" required>
         </div>
       </div>
       <div class="fld">
