@@ -306,6 +306,57 @@ ul,ol,li{list-style:none}
 /* 플로팅 CTA */
 .float-cta{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--bdr);padding:8px 10px env(safe-area-inset-bottom,8px);z-index:100}
 .float-cta a{display:block;max-width:800px;margin:0 auto;padding:16px;background:var(--ink);color:#fff;font-size:20px;font-weight:bold;text-align:center;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.22)}
+
+/* PROMO CARD (시각적/긴박감) */
+.promo-card{background:linear-gradient(160deg,#fff 0%, #f0f4ff 100%);border:1.5px solid #c7d2fe;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.promo-visual{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 10px;text-align:center;font-family:'Pretendard Variable',sans-serif;position:relative}
+
+.live-dot-wrap{position:absolute;top:10px;right:10px;display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #fecaca;border-radius:999px;padding:3px 8px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#ef4444;animation:liveBlink 1s infinite}
+.live-txt{font-size:9px;font-weight:900;color:#ef4444;letter-spacing:.08em}
+@keyframes liveBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.85)}}
+
+/* 택배 상자 — 2단 컨베이어 좌→우 롤링 */
+.box-wrap{width:100%;height:160px;overflow:hidden;position:relative;margin-bottom:6px}
+.box-svg{position:absolute;display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,.2));opacity:0;will-change:left,transform,opacity}
+@keyframes boxRoll{
+  0%   { left:-25%; transform: rotate(0); opacity:0; }
+  6%   { opacity:1; }
+  94%  { opacity:1; }
+  100% { left:105%;  transform: rotate(360deg); opacity:0; }
+}
+/* 위 줄 */
+.box-svg.b1{width:64px;height:58px;top:6px;animation:boxRoll 3s linear infinite;animation-delay:0s}
+.box-svg.b2{width:58px;height:53px;top:14px;animation:boxRoll 3s linear infinite;animation-delay:1s}
+.box-svg.b3{width:60px;height:55px;top:8px;animation:boxRoll 3s linear infinite;animation-delay:2s}
+/* 아래 줄 */
+.box-svg.b4{width:72px;height:65px;top:82px;animation:boxRoll 3s linear infinite;animation-delay:.5s}
+.box-svg.b5{width:64px;height:58px;top:90px;animation:boxRoll 3s linear infinite;animation-delay:1.5s}
+.box-svg.b6{width:68px;height:62px;top:84px;animation:boxRoll 3s linear infinite;animation-delay:2.5s}
+
+.promo-headline{font-size:11px;font-weight:800;color:var(--blue);letter-spacing:.04em;background:#eef1fb;padding:3px 9px;border-radius:999px;margin-bottom:6px}
+.promo-count-wrap{display:flex;align-items:baseline;justify-content:center;gap:3px;line-height:1;margin-bottom:6px}
+.promo-count{font-size:42px;font-weight:900;letter-spacing:-.05em;color:var(--blue);font-feature-settings:"tnum";animation:countPulse 2s ease-in-out infinite}
+.promo-unit{font-size:18px;font-weight:900;color:#111;letter-spacing:-.02em}
+@keyframes countPulse{0%,100%{transform:scale(1);color:var(--blue)}50%{transform:scale(1.04);color:#ef4444}}
+
+.promo-sub{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:10px;letter-spacing:-.01em}
+.promo-bar{width:100%;max-width:160px;height:6px;background:#e5e7eb;border-radius:999px;overflow:hidden;position:relative}
+.promo-bar-fill{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,#ef4444,#ff9800,#ffd54f);border-radius:999px;width:18%;animation:barShrink 6s ease-in-out infinite}
+@keyframes barShrink{0%,100%{width:22%}50%{width:14%}}
+
+@media(max-width:400px){
+  .promo-count{font-size:34px}
+  .promo-unit{font-size:15px}
+  .hg{width:54px;height:74px}
+}
+@media(max-width:340px){
+  .promo-count{font-size:28px}
+  .promo-unit{font-size:13px}
+  .hg{width:46px;height:64px}
+  .promo-headline{font-size:10px}
+}
+
 </style>
 </head>
 <body>
@@ -451,10 +502,44 @@ ul,ol,li{list-style:none}
       </div>
     </div>
     <div class="flag-card promo-card">
-      <div class="p1">전국최저가<br>보장!!!</div>
-      <div class="p2">5,000<small>대</small></div>
-      <div class="p1">한정</div>
-      <div class="p3">특판 할인!</div>
+      <div class="promo-visual">
+        <div class="live-dot-wrap"><span class="live-dot"></span><span class="live-txt">LIVE</span></div>
+        <div class="box-wrap" aria-hidden="true">
+          <svg class="box-svg b1" viewBox="0 0 110 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <symbol id="cargoBox" viewBox="0 0 110 100">
+                <path d="M14 28 L78 28 L78 92 L14 92 Z" fill="#d4a373"/>
+                <path d="M78 28 L94 22 L94 86 L78 92 Z" fill="#b08855"/>
+                <path d="M14 28 L78 28 L86 14 L22 14 Z" fill="#c79768"/>
+                <path d="M78 28 L94 22 L102 8 L86 14 Z" fill="#9d764a"/>
+                <path d="M14 28 L78 28 L94 22 M78 28 L78 92 L94 86 L94 22" stroke="#7d5a30" stroke-width="0.8" fill="none" opacity=".4"/>
+                <rect x="48" y="40" width="22" height="44" fill="none" stroke="#5a3a1a" stroke-width="0.6" opacity=".55"/>
+                <rect x="51" y="42" width="16" height="12" fill="none" stroke="#2a1810" stroke-width="0.7"/>
+                <path d="M55 45 L63 45 L62 49 L60 50 L60 51 L62 51 L62 52 L56 52 L56 51 L58 51 L58 50 L56 49 Z" fill="#2a1810"/>
+                <rect x="51" y="56" width="16" height="12" fill="none" stroke="#2a1810" stroke-width="0.7"/>
+                <path d="M59 58 L59 62 M55 62 Q59 59 63 62 M55 62 L57 65 M59 62 L59 65 M63 62 L61 65" stroke="#2a1810" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+                <circle cx="56" cy="65.5" r="0.5" fill="#2a1810"/><circle cx="59" cy="66" r="0.5" fill="#2a1810"/><circle cx="62" cy="65.5" r="0.5" fill="#2a1810"/>
+                <rect x="51" y="70" width="16" height="12" fill="none" stroke="#2a1810" stroke-width="0.7"/>
+                <path d="M55 78 L57 76 L57 80 L55 80 Z M55 76 L59 76 L59 74 L57 74 L57 76 Z" fill="#2a1810"/>
+                <path d="M61 78 L63 76 L63 80 L61 80 Z M61 76 L65 76 L65 74 L63 74 L63 76 Z" fill="#2a1810"/>
+              </symbol>
+            </defs>
+            <use href="#cargoBox"/>
+          </svg>
+          <svg class="box-svg b2" viewBox="0 0 110 100" xmlns="http://www.w3.org/2000/svg"><use href="#cargoBox"/></svg>
+          <svg class="box-svg b3" viewBox="0 0 110 100" xmlns="http://www.w3.org/2000/svg"><use href="#cargoBox"/></svg>
+          <svg class="box-svg b4" viewBox="0 0 110 100" xmlns="http://www.w3.org/2000/svg"><use href="#cargoBox"/></svg>
+          <svg class="box-svg b5" viewBox="0 0 110 100" xmlns="http://www.w3.org/2000/svg"><use href="#cargoBox"/></svg>
+          <svg class="box-svg b6" viewBox="0 0 110 100" xmlns="http://www.w3.org/2000/svg"><use href="#cargoBox"/></svg>
+        </div>
+        <div class="promo-headline">단독 특판 한정수량</div>
+        <div class="promo-count-wrap">
+          <span class="promo-count" id="promoCount">5,000</span>
+          <span class="promo-unit">대</span>
+        </div>
+        <div class="promo-sub">전국 동시 진행 · 빠른 마감 임박</div>
+        <div class="promo-bar"><div class="promo-bar-fill"></div></div>
+      </div>
     </div>
   </div>
 </section>
