@@ -6,6 +6,7 @@
     }
   },
   "rewrites": [
+    { "source": "/",                   "destination": "/both_admin/" },
     { "source": "/api/att/cancel",     "destination": "/api/att/request?__op=cancel" },
     { "source": "/api/att/pending",    "destination": "/api/att/request?__op=pending" },
     { "source": "/api/auth/pending",   "destination": "/api/auth/signup?__op=pending" },
