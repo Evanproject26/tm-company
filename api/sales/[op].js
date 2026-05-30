@@ -42,7 +42,7 @@ export default requireAuth(async function handler(req, res) {
               LEFT JOIN users u ON u.id = o.tm_user_id
               LEFT JOIN db_vendors v ON v.id = o.vendor_id
               WHERE o.consult_date >= ${start} AND o.consult_date < ${end}
-              ORDER BY (o.payment_date IS NULL), o.payment_date ASC, o.consult_date ASC, o.id ASC`
+              ORDER BY o.id ASC`
           : await sql`
               SELECT o.*, u.name AS tm_name, v.code AS vendor_code, v.label AS vendor_label,
                      v.parent_label, v.color AS vendor_color
@@ -51,7 +51,7 @@ export default requireAuth(async function handler(req, res) {
               LEFT JOIN db_vendors v ON v.id = o.vendor_id
               WHERE o.consult_date >= ${start} AND o.consult_date < ${end}
                 AND o.tm_user_id = ${me.id}
-              ORDER BY (o.payment_date IS NULL), o.payment_date ASC, o.consult_date ASC, o.id ASC`;
+              ORDER BY o.id ASC`;
       } else {
         rows = isPriv
           ? await sql`
@@ -60,7 +60,7 @@ export default requireAuth(async function handler(req, res) {
               FROM sales_orders o
               LEFT JOIN users u ON u.id = o.tm_user_id
               LEFT JOIN db_vendors v ON v.id = o.vendor_id
-              ORDER BY (o.payment_date IS NULL), o.payment_date ASC, o.consult_date ASC, o.id ASC LIMIT 20000`
+              ORDER BY o.id ASC LIMIT 20000`
           : await sql`
               SELECT o.*, u.name AS tm_name, v.code AS vendor_code, v.label AS vendor_label,
                      v.parent_label, v.color AS vendor_color
@@ -68,7 +68,7 @@ export default requireAuth(async function handler(req, res) {
               LEFT JOIN users u ON u.id = o.tm_user_id
               LEFT JOIN db_vendors v ON v.id = o.vendor_id
               WHERE o.tm_user_id = ${me.id}
-              ORDER BY (o.payment_date IS NULL), o.payment_date ASC, o.consult_date ASC, o.id ASC LIMIT 20000`;
+              ORDER BY o.id ASC LIMIT 20000`;
       }
       return res.status(200).json({ orders: rows });
     }
