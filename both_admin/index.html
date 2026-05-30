@@ -2268,10 +2268,24 @@ function renderPeople(){
         else if(r.type==='SICK') cnt.SICK++;
       });
       // 익일 휴무/반차/연차 여부 (마감보고)
+      // 개인 신청 기록이 있으면 그 라벨 우선, 없을 때만 요일 자동 판단 (토/일 → 휴무)
       const tmrRec=State.records.find(r=>r.user_id===u.id && String(r.work_date).slice(0,10)===tomorrowYmd);
-      const tmrType=tmrRec?tmrRec.type:'WORK';
-      const tmrIsOff=tmrRec && tmrRec.type!=='WORK';
-      const tmrLabel=tmrRec?TYPE_LABELS[tmrRec.type]:'정상출근 예정';
+      const _tmrDow=_tmr.getDay(); // 0=일, 6=토
+      const _isWeekend=_tmrDow===0||_tmrDow===6;
+      let tmrType, tmrIsOff, tmrLabel;
+      if(tmrRec){
+        tmrType=tmrRec.type;
+        tmrIsOff=tmrRec.type!=='WORK';
+        tmrLabel=TYPE_LABELS[tmrRec.type];
+      } else if(_isWeekend){
+        tmrType='OFF';
+        tmrIsOff=true;
+        tmrLabel=_tmrDow===0?'휴무 (일요일)':'휴무 (토요일)';
+      } else {
+        tmrType='WORK';
+        tmrIsOff=false;
+        tmrLabel='정상출근 예정';
+      }
       const wait=allMine.filter(r=>r.status==='REQUESTED').length;
       const rangeCnt=inRangeMine.length;
 
