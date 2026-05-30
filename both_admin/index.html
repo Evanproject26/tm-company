@@ -2270,7 +2270,9 @@ function renderPeople(){
       // 익일 휴무/반차/연차 여부 (마감보고)
       // 개인 신청 기록이 있으면 그 라벨 우선, 없을 때만 요일 자동 판단 (토/일 → 휴무)
       const tmrRec=State.records.find(r=>r.user_id===u.id && String(r.work_date).slice(0,10)===tomorrowYmd);
-      const _tmrDow=_tmr.getDay(); // 0=일, 6=토
+      // 검증용 — URL ?_simdow=N (N=0~6)이면 그 요일이 '내일'인 척 시뮬레이션
+      const _simDow=(()=>{ try{ const q=new URLSearchParams(location.search).get('_simdow'); const n=q==null?NaN:parseInt(q,10); return (n>=0&&n<=6)?n:null; }catch(_){ return null; } })();
+      const _tmrDow=_simDow!==null?_simDow:_tmr.getDay(); // 0=일, 6=토
       const _isWeekend=_tmrDow===0||_tmrDow===6;
       let tmrType, tmrIsOff, tmrLabel;
       if(tmrRec){
