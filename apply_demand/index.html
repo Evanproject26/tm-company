@@ -350,9 +350,9 @@ ul,ol,li{list-style:none}
 .promo-count-wrap{display:flex;align-items:baseline;justify-content:center;gap:3px;line-height:1;margin-bottom:6px;white-space:nowrap;flex-wrap:nowrap;max-width:100%;padding:0 12px;box-sizing:border-box}
 .promo-count{font-size:80px;font-weight:900;letter-spacing:-.05em;color:var(--blue);font-feature-settings:"tnum";animation:countPulse 2s ease-in-out infinite;white-space:nowrap}
 .promo-unit{font-size:32px;font-weight:900;color:#111;letter-spacing:-.02em;white-space:nowrap;flex-shrink:0}
-@media(max-width:768px){.promo-count{font-size:42px!important}.promo-unit{font-size:18px!important}}
-@media(max-width:480px){.promo-count{font-size:32px!important}.promo-unit{font-size:14px!important}}
-@media(max-width:360px){.promo-count{font-size:26px!important}.promo-unit{font-size:11px!important}}
+@media(max-width:768px){.promo-card,.promo-visual{padding-left:6px!important;padding-right:6px!important}.promo-count{font-size:38px!important;letter-spacing:-.04em!important}.promo-unit{font-size:16px!important}}
+@media(max-width:480px){.promo-count{font-size:30px!important}.promo-unit{font-size:13px!important}}
+@media(max-width:380px){.promo-count{font-size:24px!important}.promo-unit{font-size:10px!important}}
 @keyframes countPulse{0%,100%{transform:scale(1);color:var(--blue)}50%{transform:scale(1.04);color:#ef4444}}
 
 .promo-sub{font-size:13px;font-weight:700;color:var(--sub);margin-bottom:10px;letter-spacing:-.01em}
@@ -361,13 +361,9 @@ ul,ol,li{list-style:none}
 @keyframes barShrink{0%,100%{width:22%}50%{width:14%}}
 
 @media(max-width:400px){
-  .promo-count{font-size:60px}
-  .promo-unit{font-size:24px}
   .hg{width:54px;height:74px}
 }
 @media(max-width:340px){
-  .promo-count{font-size:48px}
-  .promo-unit{font-size:20px}
   .hg{width:46px;height:64px}
   .promo-headline{font-size:10px}
 }
