@@ -4511,7 +4511,7 @@ function renderSalesTM(){
           if (el){ el.focus(); try{ el.select(); }catch(_){} }
         });
       }
-    }catch(e){ alert(e.message); }
+    }catch(e){ showToast('저장 실패 — '+e.message); }
   }
   function editableMonthCell(uid, key, val, rowIdx, colIdx){
     const m = key==='total_count' ? colMeta['총갯수'] : colMeta['총 디비'];
@@ -4541,7 +4541,7 @@ function renderSalesTM(){
     });
     input.addEventListener('blur', ()=>{
       if (input.value.trim() === '') input.value = '0';
-      input._sheetSave().catch(e=>alert(e.message));
+      input._sheetSave().catch(e=>showToast('저장 실패 — '+e.message));
     });
     return td;
   }
@@ -4777,7 +4777,7 @@ function renderSalesTMDaily(){
           if (el){ el.focus(); try{ el.select(); }catch(_){} }
         });
       }
-    }catch(e){ alert(e.message); }
+    }catch(e){ showToast('저장 실패 — '+e.message); }
   }
 
   // 엑셀식 — 단일일 모드에서만 편집. 범위 모드는 합산 표시 (읽기 전용)
@@ -4810,7 +4810,7 @@ function renderSalesTMDaily(){
     input.addEventListener('blur', ()=>{
       // 빈값이면 0 으로 복원
       if (input.value.trim() === '') input.value = '0';
-      input._sheetSave().catch(e=>alert(e.message));
+      input._sheetSave().catch(e=>showToast('저장 실패 — '+e.message));
     });
     return td;
   }
