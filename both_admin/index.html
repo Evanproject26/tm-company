@@ -3361,9 +3361,13 @@ async function loadSalesContext(page, force){
       }));
     }
   } else if (page==='sales-tm'){
-    const ym=State.salesYm || todayYm(); State.salesYm=ym;
-    const cutoff=State.salesCutoff || (new Date().toISOString().slice(0,10));
-    State.salesCutoff=cutoff;
+    // PB 내역 등에서 salesYm='ALL' 같은 비표준 값이 들어와 있을 수 있음 → 정규식 검증 후 fallback
+    let ym = State.salesYm;
+    if (!ym || !/^\d{4}-\d{2}$/.test(ym)) ym = todayYm();
+    State.salesYm = ym;
+    let cutoff = State.salesCutoff;
+    if (!cutoff || !/^\d{4}-\d{2}-\d{2}$/.test(cutoff)) cutoff = new Date().toISOString().slice(0,10);
+    State.salesCutoff = cutoff;
     const key = `${ym}|${cutoff}`;
     if (force || State.salesTmLoadedKey !== key){
       tasks.push(api(`/api/sales/tm-summary?ym=${ym}&cutoff=${cutoff}`).then(r=>{
