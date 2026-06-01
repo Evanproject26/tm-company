@@ -4070,17 +4070,18 @@ function renderSalesOrders(){
   }
 
   // 표 — 12행 컬럼 (대표 지시 2026-06-01, 엑셀 시트와 동일 순서)
+  // 너비 통일 — "추가내용" 제외 모두 동일 (대표 지시)
   const cols=[
-    {k:'consultant_name',label:'1차상담원/일자',type:'text',w:80,
+    {k:'consultant_name',label:'1차상담원/일자',type:'text',w:90,
       val:(r)=> r.consultant_name || r.tm_name || ''},
     {k:'customer_name',label:'고객명',type:'text',w:90},
-    {k:'customer_phone',label:'전화번호',type:'text',w:120},
-    {k:'carrier',label:'통신사',type:'carrier',w:60},
-    {k:'consult_date',label:'개통일자',type:'date',w:96},
-    {k:'payment_bank',label:'은행명',type:'text',w:80},
-    {k:'payment_account',label:'계좌',type:'text',w:140},
-    {k:'amount',label:'금액',type:'amount',w:100},
-    {k:'payment_date',label:'완료일자',type:'date',w:96},
+    {k:'customer_phone',label:'전화번호',type:'text',w:90},
+    {k:'carrier',label:'통신사',type:'carrier',w:90},
+    {k:'consult_date',label:'개통일자',type:'date',w:90},
+    {k:'payment_bank',label:'은행명',type:'text',w:90},
+    {k:'payment_account',label:'계좌',type:'text',w:90},
+    {k:'amount',label:'금액',type:'amount',w:90},
+    {k:'payment_date',label:'완료일자',type:'date',w:90},
     {k:'blank1',label:'',type:'text',w:90},
     {k:'blank2',label:'',type:'text',w:90},
     {k:'note',label:'추가내용',type:'text',w:200},
