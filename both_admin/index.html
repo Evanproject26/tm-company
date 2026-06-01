@@ -3989,12 +3989,12 @@ function renderSalesOrders(){
   const fmtKR = (n)=> '₩'+Number(n||0).toLocaleString('ko-KR');
   function summaryCard(label, count, amount, bg, fg, accent, statusKey, isActive){
     const card = h('div',{
-      style:`flex:1;min-width:160px;padding:14px 16px;background:${bg};border:2px solid ${isActive?fg:accent};border-radius:11px;cursor:pointer;transition:transform .08s,box-shadow .08s;${isActive?'box-shadow:0 6px 16px rgba(15,15,15,.08);transform:translateY(-1px)':''}`
+      style:`flex:1 1 0;min-width:0;padding:8px 10px;background:${bg};border:2px solid ${isActive?fg:accent};border-radius:9px;cursor:pointer;transition:transform .08s,box-shadow .08s;${isActive?'box-shadow:0 4px 10px rgba(15,15,15,.08)':''}`
     },
-      h('div',{style:`font-size:11px;font-weight:700;color:${fg};letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px`},
-        label, isActive?h('span',{style:'margin-left:auto;font-size:10px'},'✓ 필터중'):null),
-      h('div',{style:`font-size:20px;font-weight:800;color:${fg};font-variant-numeric:tabular-nums`}, count+'건'),
-      h('div',{style:`font-size:12px;color:${fg};font-variant-numeric:tabular-nums;margin-top:2px;opacity:.85`}, fmtKR(amount))
+      h('div',{style:`font-size:10px;font-weight:700;color:${fg};letter-spacing:0.03em;margin-bottom:3px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden`},
+        label, isActive?h('span',{style:'margin-left:auto;font-size:9px'},'✓'):null),
+      h('div',{style:`font-size:14px;font-weight:800;color:${fg};font-variant-numeric:tabular-nums`}, count+'건'),
+      h('div',{style:`font-size:11px;color:${fg};font-variant-numeric:tabular-nums;margin-top:1px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis`}, fmtKR(amount))
     );
     card.addEventListener('click', ()=>{
       // 토글: 같은 키 클릭 시 ALL 로 복귀
