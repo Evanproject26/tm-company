@@ -128,9 +128,9 @@ async function sendOneAlimtalk({ name, date, type, receiver }) {
     receiver_1: receiver,
     subject_1:  '[티엠컴퍼니 휴무 알림]',
     message_1:  body,
-    failover:   'Y',
-    fsubject_1: '[티엠컴퍼니 휴무 알림]',
-    fmessage_1: body,
+    failover:   'N',
+    fsubject_1: '',
+    fmessage_1: '',
     testmode_yn: 'N',
   };
 
