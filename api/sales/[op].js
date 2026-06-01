@@ -34,6 +34,7 @@ export default requireAuth(async function handler(req, res) {
         const ny = m === 12 ? y+1 : y;
         const nm = m === 12 ? 1 : m+1;
         const end = `${ny}-${String(nm).padStart(2,'0')}-01`;
+        // 모든 날짜 기준 = 입금일자(payment_date). 미입금은 consult_date fallback. (대표 지시 2026-06-01)
         rows = isPriv
           ? await sql`
               SELECT o.*, u.name AS tm_name, v.code AS vendor_code, v.label AS vendor_label,
@@ -41,17 +42,19 @@ export default requireAuth(async function handler(req, res) {
               FROM sales_orders o
               LEFT JOIN users u ON u.id = o.tm_user_id
               LEFT JOIN db_vendors v ON v.id = o.vendor_id
-              WHERE o.consult_date >= ${start} AND o.consult_date < ${end}
-              ORDER BY o.id ASC`
+              WHERE COALESCE(o.payment_date, o.consult_date) >= ${start}
+                AND COALESCE(o.payment_date, o.consult_date) < ${end}
+              ORDER BY o.payment_date DESC NULLS LAST, o.consult_date DESC NULLS LAST, o.id DESC`
           : await sql`
               SELECT o.*, u.name AS tm_name, v.code AS vendor_code, v.label AS vendor_label,
                      v.parent_label, v.color AS vendor_color
               FROM sales_orders o
               LEFT JOIN users u ON u.id = o.tm_user_id
               LEFT JOIN db_vendors v ON v.id = o.vendor_id
-              WHERE o.consult_date >= ${start} AND o.consult_date < ${end}
+              WHERE COALESCE(o.payment_date, o.consult_date) >= ${start}
+                AND COALESCE(o.payment_date, o.consult_date) < ${end}
                 AND o.tm_user_id = ${me.id}
-              ORDER BY o.id ASC`;
+              ORDER BY o.payment_date DESC NULLS LAST, o.consult_date DESC NULLS LAST, o.id DESC`;
       } else {
         rows = isPriv
           ? await sql`
@@ -60,7 +63,7 @@ export default requireAuth(async function handler(req, res) {
               FROM sales_orders o
               LEFT JOIN users u ON u.id = o.tm_user_id
               LEFT JOIN db_vendors v ON v.id = o.vendor_id
-              ORDER BY o.id ASC LIMIT 20000`
+              ORDER BY o.payment_date DESC NULLS LAST, o.consult_date DESC NULLS LAST, o.id DESC LIMIT 20000`
           : await sql`
               SELECT o.*, u.name AS tm_name, v.code AS vendor_code, v.label AS vendor_label,
                      v.parent_label, v.color AS vendor_color
@@ -68,7 +71,7 @@ export default requireAuth(async function handler(req, res) {
               LEFT JOIN users u ON u.id = o.tm_user_id
               LEFT JOIN db_vendors v ON v.id = o.vendor_id
               WHERE o.tm_user_id = ${me.id}
-              ORDER BY o.id ASC LIMIT 20000`;
+              ORDER BY o.payment_date DESC NULLS LAST, o.consult_date DESC NULLS LAST, o.id DESC LIMIT 20000`;
       }
       return res.status(200).json({ orders: rows });
     }

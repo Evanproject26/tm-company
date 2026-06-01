@@ -3888,8 +3888,9 @@ function renderSalesOrders(){
     if(ff.status !== 'ALL') out = out.filter(r => r.status === ff.status);
     if(ff.tm     !== 'ALL') out = out.filter(r => String(r.tm_user_id) === ff.tm);
     if(ff.vendor !== 'ALL') out = out.filter(r => String(r.vendor_id) === ff.vendor);
-    if(ff.dateFrom) out = out.filter(r => String(r.consult_date||'').slice(0,10) >= ff.dateFrom);
-    if(ff.dateTo)   out = out.filter(r => String(r.consult_date||'').slice(0,10) <= ff.dateTo);
+    const _rd = (r) => String(r.payment_date || r.consult_date || '').slice(0,10);
+    if(ff.dateFrom) out = out.filter(r => _rd(r) >= ff.dateFrom);
+    if(ff.dateTo)   out = out.filter(r => _rd(r) <= ff.dateTo);
     if(ff.q){
       const q = ff.q.trim().toLowerCase();
       out = out.filter(r => (String(r.customer_name||'')+String(r.customer_phone||'')+String(r.note||'')).toLowerCase().includes(q));
@@ -3951,14 +3952,15 @@ function renderSalesOrders(){
     wrap.append(banner);
   }
 
-  // 필터 적용
+  // 필터 적용 — 모든 날짜 기준 = 입금일자(payment_date), 없으면 개통일자 fallback (대표 지시 2026-06-01)
   let rows=State.salesOrders.slice();
   const f=State.salesOrdersFilter;
+  const rowDate = (r) => String(r.payment_date || r.consult_date || '').slice(0,10);
   if (f.status!=='ALL') rows=rows.filter(r=>r.status===f.status);
   if (f.tm!=='ALL') rows=rows.filter(r=>String(r.tm_user_id)===f.tm);
   if (f.vendor!=='ALL') rows=rows.filter(r=>String(r.vendor_id)===f.vendor);
-  if (f.dateFrom) rows=rows.filter(r=>String(r.consult_date||'').slice(0,10)>=f.dateFrom);
-  if (f.dateTo)   rows=rows.filter(r=>String(r.consult_date||'').slice(0,10)<=f.dateTo);
+  if (f.dateFrom) rows=rows.filter(r=> rowDate(r) >= f.dateFrom);
+  if (f.dateTo)   rows=rows.filter(r=> rowDate(r) <= f.dateTo);
   if (f.q.trim()){
     const q=f.q.trim().toLowerCase();
     rows=rows.filter(r=>
