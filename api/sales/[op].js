@@ -73,6 +73,68 @@ export default requireAuth(async function handler(req, res) {
       return res.status(200).json({ orders: rows });
     }
     if (req.method === 'POST') {
+      // 일괄 등록 — body.rows 배열로 받아 한 번에 INSERT (엑셀 import용, 대표 지시 2026-06-01)
+      if (req.query.bulk === '1') {
+        if (!isPriv) return res.status(403).json({ error: '일괄 등록 권한 없음 (관리자 전용)' });
+        const b = await readJson(req);
+        const rows = Array.isArray(b.rows) ? b.rows : [];
+        if (!rows.length) return res.status(400).json({ error: 'rows required (array)' });
+        let inserted = 0, skipped = 0;
+        const errors = [];
+        // 청크 단위 (한 INSERT에 100 row) — 4000건도 수십회 호출로 빠르게 처리
+        const CHUNK = 100;
+        for (let i = 0; i < rows.length; i += CHUNK) {
+          const slice = rows.slice(i, i + CHUNK);
+          try {
+            // VALUES 다중행 — parameterized
+            const values = slice.map(r => {
+              const st = r.status && ORDER_STATUS.has(r.status) ? r.status : 'UNPAID';
+              return sql`(
+                ${r.tm_user_id || null}, ${r.vendor_id || null},
+                ${r.customer_name || null}, ${r.customer_phone || null},
+                ${r.carrier || null}, ${r.consult_date || null},
+                ${r.payment_bank || null}, ${r.payment_account || null},
+                ${Number(r.amount || 0)}, ${r.payment_date || null},
+                ${st}, ${r.note || null},
+                ${r.consultant_name || null}, ${r.blank1 || null}, ${r.blank2 || null}
+              )`;
+            });
+            await sql`
+              INSERT INTO sales_orders
+                (tm_user_id, vendor_id, customer_name, customer_phone, carrier, consult_date,
+                 payment_bank, payment_account, amount, payment_date, status, note,
+                 consultant_name, blank1, blank2)
+              VALUES ${values}`;
+            inserted += slice.length;
+          } catch (e) {
+            // 청크 단위 실패 시 1건씩 재시도 — 실패 행만 스킵
+            for (const r of slice) {
+              try {
+                const st = r.status && ORDER_STATUS.has(r.status) ? r.status : 'UNPAID';
+                await sql`
+                  INSERT INTO sales_orders
+                    (tm_user_id, vendor_id, customer_name, customer_phone, carrier, consult_date,
+                     payment_bank, payment_account, amount, payment_date, status, note,
+                     consultant_name, blank1, blank2)
+                  VALUES
+                    (${r.tm_user_id || null}, ${r.vendor_id || null},
+                     ${r.customer_name || null}, ${r.customer_phone || null},
+                     ${r.carrier || null}, ${r.consult_date || null},
+                     ${r.payment_bank || null}, ${r.payment_account || null},
+                     ${Number(r.amount || 0)}, ${r.payment_date || null},
+                     ${st}, ${r.note || null},
+                     ${r.consultant_name || null}, ${r.blank1 || null}, ${r.blank2 || null})`;
+                inserted++;
+              } catch (e2) {
+                skipped++;
+                if (errors.length < 10) errors.push({ row: r, error: String(e2.message || e2).slice(0,200) });
+              }
+            }
+          }
+        }
+        return res.status(200).json({ ok: true, inserted, skipped, errors });
+      }
+
       const b = await readJson(req);
       const status = b.status && ORDER_STATUS.has(b.status) ? b.status : 'UNPAID';
       const tmId = b.tm_user_id || (isPriv ? null : me.id);
@@ -88,19 +150,24 @@ export default requireAuth(async function handler(req, res) {
             carrier = ${b.carrier || null}, consult_date = ${b.consult_date || null},
             payment_bank = ${b.payment_bank || null}, payment_account = ${b.payment_account || null},
             amount = ${Number(b.amount || 0)}, payment_date = ${b.payment_date || null},
-            status = ${status}, note = ${b.note || null}, updated_at = NOW()
+            status = ${status}, note = ${b.note || null},
+            consultant_name = ${b.consultant_name || null},
+            blank1 = ${b.blank1 || null}, blank2 = ${b.blank2 || null},
+            updated_at = NOW()
           WHERE id = ${b.id} RETURNING *`;
         return res.status(200).json({ ok: true, order: rows[0] });
       }
       const rows = await sql`
         INSERT INTO sales_orders
           (tm_user_id, vendor_id, customer_name, customer_phone, carrier, consult_date,
-           payment_bank, payment_account, amount, payment_date, status, note)
+           payment_bank, payment_account, amount, payment_date, status, note,
+           consultant_name, blank1, blank2)
         VALUES
           (${tmId}, ${b.vendor_id || null}, ${b.customer_name || null}, ${b.customer_phone || null},
            ${b.carrier || null}, ${b.consult_date || null}, ${b.payment_bank || null},
            ${b.payment_account || null}, ${Number(b.amount || 0)}, ${b.payment_date || null},
-           ${status}, ${b.note || null})
+           ${status}, ${b.note || null},
+           ${b.consultant_name || null}, ${b.blank1 || null}, ${b.blank2 || null})
         RETURNING *`;
       const enriched = await sql`
         SELECT o.*, u.name AS tm_name, v.code AS vendor_code, v.label AS vendor_label,

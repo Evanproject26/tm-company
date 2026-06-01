@@ -294,6 +294,10 @@ export async function ensureSchema() {
     await sql`ALTER TABLE sales_orders DROP CONSTRAINT IF EXISTS sales_orders_status_check`;
     await sql`ALTER TABLE sales_orders ADD CONSTRAINT sales_orders_status_check
         CHECK (status IN ('PAID','IN_PROGRESS','UNPAID','UNPAID_PROOF','PARTIAL','CANCELLED'))`;
+    // PB 내역 새 컬럼 — 1차상담원 자유텍스트 + 공란 2개 (대표 지시 2026-06-01)
+    await sql`ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS consultant_name TEXT`;
+    await sql`ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS blank1 TEXT`;
+    await sql`ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS blank2 TEXT`;
     await Promise.all([
       sql`ALTER TABLE applications ADD COLUMN IF NOT EXISTS downloaded_at TIMESTAMPTZ NULL`,
       // 직원 분류 구분 (1차직원 / 2차직원) — 가입 시 선택, NULL = 미선택 = 레거시(2차 기본)

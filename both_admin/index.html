@@ -537,6 +537,7 @@
   .add-row-btn:hover{background:#000}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -3456,6 +3457,94 @@ async function navTo(key){
   }
 }
 
+// XLSX 셀 fill 색상 추출 — SheetJS community는 색상을 안 읽음. JSZip + DOMParser로 raw XML 파싱.
+// 반환: Map<셀주소("A4"), "FFRRGGBB" 또는 null>
+async function extractFillColors(arrayBuf){
+  const colorMap = new Map();
+  try{
+    const zip = await JSZip.loadAsync(arrayBuf);
+    const stylesXml = await zip.file('xl/styles.xml')?.async('string');
+    if (!stylesXml) return colorMap;
+    const parser = new DOMParser();
+    const stylesDoc = parser.parseFromString(stylesXml, 'application/xml');
+
+    // theme 색 (theme1) — indexed/theme 참조 시 필요 (대부분의 엑셀 파일이 theme 색 사용)
+    const themeXml = await zip.file('xl/theme/theme1.xml')?.async('string');
+    const themeColors = [];
+    if (themeXml){
+      const themeDoc = parser.parseFromString(themeXml, 'application/xml');
+      // a:clrScheme/a:srgbClr 순서대로 color list (lt1, dk1, lt2, dk2, accent1~6, hlink, folHlink)
+      // 단순화: srgbClr 만 수집
+      const clrs = themeDoc.getElementsByTagName('a:srgbClr');
+      for (let i = 0; i < clrs.length; i++) themeColors.push(clrs[i].getAttribute('val'));
+    }
+
+    // fills 배열 추출
+    const fillNodes = stylesDoc.querySelectorAll('fills > fill');
+    const fills = [];
+    fillNodes.forEach(fnode => {
+      const pf = fnode.querySelector('patternFill');
+      if (!pf) { fills.push(null); return; }
+      const fg = pf.querySelector('fgColor');
+      if (!fg) { fills.push(null); return; }
+      const rgb = fg.getAttribute('rgb');
+      const indexed = fg.getAttribute('indexed');
+      const theme = fg.getAttribute('theme');
+      if (rgb) fills.push(rgb.toUpperCase());
+      else if (theme !== null && themeColors[Number(theme)]) fills.push('FF' + themeColors[Number(theme)].toUpperCase());
+      else if (indexed !== null) fills.push(null); // indexed 팔레트는 생략 (특수 케이스)
+      else fills.push(null);
+    });
+
+    // cellXfs[xfId].fillId → fills[fillId]
+    const xfNodes = stylesDoc.querySelectorAll('cellXfs > xf');
+    const fillByXf = [];
+    xfNodes.forEach(xf => {
+      const fid = xf.getAttribute('fillId');
+      fillByXf.push(fid !== null ? Number(fid) : -1);
+    });
+
+    // workbook.xml — 첫 sheet의 r:id
+    const wbXml = await zip.file('xl/workbook.xml')?.async('string');
+    const wbDoc = parser.parseFromString(wbXml, 'application/xml');
+    const sheets = wbDoc.getElementsByTagName('sheet');
+    if (!sheets.length) return colorMap;
+    // r:id 속성 가져오기
+    const firstSheet = sheets[0];
+    const rId = firstSheet.getAttribute('r:id') || firstSheet.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+    // workbook rels에서 sheet 파일 경로 찾기
+    const wbRelsXml = await zip.file('xl/_rels/workbook.xml.rels')?.async('string');
+    const wbRelsDoc = parser.parseFromString(wbRelsXml, 'application/xml');
+    let sheetPath = 'xl/worksheets/sheet1.xml';
+    const rels = wbRelsDoc.getElementsByTagName('Relationship');
+    for (let i = 0; i < rels.length; i++) {
+      if (rels[i].getAttribute('Id') === rId) {
+        const target = rels[i].getAttribute('Target');
+        sheetPath = target.startsWith('/') ? target.slice(1) : 'xl/' + target.replace(/^\.\.\//,'');
+        break;
+      }
+    }
+    const sheetXml = await zip.file(sheetPath)?.async('string');
+    if (!sheetXml) return colorMap;
+    const sheetDoc = parser.parseFromString(sheetXml, 'application/xml');
+    const cells = sheetDoc.getElementsByTagName('c');
+    for (let i = 0; i < cells.length; i++) {
+      const c = cells[i];
+      const ref = c.getAttribute('r');
+      const s = c.getAttribute('s');
+      if (!ref || s === null) continue;
+      const xfIdx = Number(s);
+      const fillIdx = fillByXf[xfIdx];
+      if (fillIdx === undefined || fillIdx < 0) continue;
+      const color = fills[fillIdx];
+      if (color) colorMap.set(ref, color);
+    }
+  }catch(e){
+    console.error('extractFillColors failed:', e);
+  }
+  return colorMap;
+}
+
 // ─────── 요청 4: PB 내역 표 ───────
 function renderSalesOrders(){
   const me=State.user;
@@ -3571,77 +3660,197 @@ function renderSalesOrders(){
   );
   wrap.append(quickBar);
 
-  // 엑셀 양식 일괄 등록 (대표 지시) — 양식 순서: TM·개통일자·고객명·전화번호·통신사·금액·은행·계좌·입금일·상태·메모
-  const importBtn = h('button',{class:'btn',style:'padding:7px 12px;font-size:12px;font-weight:700;background:#0f0f0f;color:#fff;border-color:#0f0f0f'},'📥 양식 추가');
+  // 엑셀 양식 일괄 등록 (대표 지시 2026-06-01)
+  // 양식: 1차상담원·고객명·전화번호·통신사·개통일자·은행명·계좌·금액·완료일자·공란1·공란2·추가내용
+  // 색상 인식: FF00FF00(초록) → PAID, 그 외 → UNPAID
+  // 헤더는 Row 1 또는 Row 3 자동 감지 (대표 시트는 Row 1-2 안내, Row 3 헤더)
+  const importBtn = h('button',{class:'btn',style:'padding:7px 12px;font-size:12px;font-weight:700;background:#0f0f0f;color:#fff;border-color:#0f0f0f'},'📥 엑셀 업로드');
   importBtn.addEventListener('click', ()=>{
     const fi = document.createElement('input');
-    fi.type='file'; fi.accept='.xlsx,.xls,.csv';
+    fi.type='file'; fi.accept='.xlsx,.xls';
     fi.addEventListener('change', async ()=>{
       const file = fi.files?.[0]; if (!file) return;
       try{
         const buf = await file.arrayBuffer();
-        const wb = XLSX.read(buf, {type:'array', cellDates:true});
+        // 1) SheetJS — 셀 값 읽기
+        const wb = XLSX.read(buf, {type:'array', cellDates:true, cellStyles:true});
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws, {defval:'', raw:false});
-        if (!json.length){ alert('빈 양식입니다'); return; }
-        // 컬럼명 매핑 (한글 헤더 → PB 필드)
-        const COL = (row, ...keys)=>{
-          for (const k of keys) if (row[k] !== undefined && row[k] !== '') return row[k];
-          return '';
+
+        // 2) JSZip — xl/styles.xml + xl/worksheets/sheet1.xml 직접 파싱 (셀 fill 색상 추출)
+        // SheetJS community는 셀 색상을 안 읽음 → raw XML 파싱 필요
+        const fillColors = await extractFillColors(buf); // Map<"A1","FFRRGGBB">
+
+        // 행렬을 2D 배열로 변환 (Row 1부터)
+        const aoa = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
+        if (!aoa.length){ alert('빈 양식입니다'); return; }
+
+        // 헤더 자동 감지 — '1차상담원' 또는 '고객명' 키워드가 들어간 행
+        const HEADER_KEYS = ['1차상담원','고객명','전화번호','통신사','개통일자','은행명','계좌','금액','완료일자','추가내용','요청자','개통자','개통번호','개통처','날짜','은행','계좌번호','입금완료일자','메모'];
+        let headerRowIdx = -1;
+        for (let i = 0; i < Math.min(10, aoa.length); i++) {
+          const r = aoa[i];
+          if (!Array.isArray(r)) continue;
+          const txt = r.map(v => String(v||'').trim()).join('|');
+          const hits = HEADER_KEYS.filter(k => txt.includes(k)).length;
+          if (hits >= 4) { headerRowIdx = i; break; }
+        }
+        if (headerRowIdx < 0) { alert('헤더 행을 찾을 수 없습니다. 1행 또는 3행에 한글 헤더(1차상담원/고객명 등)가 있는지 확인하세요.'); return; }
+        const header = aoa[headerRowIdx].map(v => String(v||'').trim());
+
+        // 헤더 → 컬럼 인덱스 매핑
+        const findCol = (...keys) => {
+          for (let i = 0; i < header.length; i++) {
+            const h = header[i];
+            if (keys.some(k => h === k || h.includes(k))) return i;
+          }
+          return -1;
         };
-        const tmByName = new Map(State.users.filter(u=>u.role!=='admin').map(u=>[u.name, u.id]));
+        const idx = {
+          consultant: findCol('1차상담원','요청자','담당자','TM'),
+          customer:   findCol('고객명','개통자','이름'),
+          phone:      findCol('전화번호','개통번호','연락처'),
+          carrier:    findCol('통신사','개통처'),
+          actDate:    findCol('개통일자','날짜','상담일자'),
+          bank:       findCol('은행명','은행'),
+          account:    findCol('계좌','계좌번호'),
+          amount:     findCol('금액'),
+          payDate:    findCol('완료일자','입금완료일자','입금일자','입금일'),
+          blank1:     findCol('공란1','요청일자'),
+          blank2:     findCol('공란2','입금증'),
+          note:       findCol('추가내용','메모','비고'),
+        };
+
+        // 컬럼 미존재 시 -1 → 해당 필드 null
+        const tmByName = new Map(State.users.filter(u=>u.role!=='admin').map(u=>[String(u.name).trim(), u.id]));
         const toYmd = (v)=>{
-          if (!v) return null;
+          if (v === null || v === undefined || v === '') return null;
           if (v instanceof Date) return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
           const s = String(v).trim();
-          const m = s.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+          // YYYY-MM-DD / YYYY.MM.DD / YYYY/MM/DD
+          let m = s.match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
           if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+          // M/D 또는 M-D 만 있는 경우 (예: '5-29') — 올해 기준
+          m = s.match(/^(\d{1,2})[-./](\d{1,2})$/);
+          if (m) { const y = new Date().getFullYear(); return `${y}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`; }
+          return null; // 'O월말' 같은 텍스트는 날짜로 X
+        };
+        const carrierMap = {'SK':'SK','SKT':'SK','SK P':'SK','SK텔레콤':'SK','sk':'SK','KT':'KT','kt':'KT','LG':'LGU','LGU':'LGU','LG U+':'LGU','LGU+':'LGU','U+':'LGU','유플러스':'LGU'};
+        const normalizeCarrier = (s)=>{
+          const t = String(s||'').trim().toUpperCase().replace(/\s+/g,'');
+          for (const [k,v] of Object.entries(carrierMap)) {
+            if (t === k.toUpperCase().replace(/\s+/g,'')) return v;
+          }
+          if (t.startsWith('SK')) return 'SK';
+          if (t.startsWith('KT')) return 'KT';
+          if (t.startsWith('LG') || t.startsWith('U+') || t.includes('LGU')) return 'LGU';
           return s || null;
         };
-        const statusMap = {'입금완료':'PAID','PAID':'PAID','완료':'PAID','미입금':'UNPAID','UNPAID':'UNPAID','대기':'UNPAID','입금중':'IN_PROGRESS','취소':'CANCELLED','부분':'PARTIAL'};
-        const carrierMap = {'SK':'SK','SKT':'SK','sk':'SK','KT':'KT','kt':'KT','LG':'LGU','LGU':'LGU','LG U+':'LGU','LGU+':'LGU','U+':'LGU'};
-        const rows=[], errors=[];
-        json.forEach((row,idx)=>{
-          const tmName = String(COL(row,'TM','담당자','담당')||'').trim();
-          const tmId = tmName ? tmByName.get(tmName) : null;
-          const carrierRaw = String(COL(row,'통신사','캐리어')||'').trim();
-          const statusRaw = String(COL(row,'상태','status')||'').trim();
-          const order = {
-            tm_user_id: tmId || null,
-            consult_date: toYmd(COL(row,'개통일자','상담일자','일자','날짜')),
-            customer_name: String(COL(row,'고객명','이름','성함')||'').trim() || null,
-            customer_phone: String(COL(row,'전화번호','전화','연락처','휴대폰')||'').trim() || null,
-            carrier: carrierMap[carrierRaw] || carrierRaw || null,
-            amount: Number(String(COL(row,'금액','액수','price')||'0').replace(/[^0-9-]/g,'')) || 0,
-            payment_bank: String(COL(row,'은행','입금은행','bank')||'').trim() || null,
-            payment_account: String(COL(row,'계좌','계좌번호','account')||'').trim() || null,
-            payment_date: toYmd(COL(row,'입금일','입금일자','payment_date')),
-            status: statusMap[statusRaw] || 'UNPAID',
-            note: String(COL(row,'메모','비고','note')||'').trim() || null,
-          };
-          // 입금완료인데 입금일자 비어있으면 오늘로 자동 (대표 지시)
-          if (order.status === 'PAID' && !order.payment_date) {
-            order.payment_date = new Date().toISOString().slice(0,10);
+
+        // 셀 주소 (예: 행 5, 컬럼 0 → 'A5') → XLSX coord
+        const cellAddr = (rowIdx, colIdx) => XLSX.utils.encode_cell({r: rowIdx, c: colIdx});
+
+        const rowsOut = [];
+        const colorStats = { paid:0, unpaid:0, special:{} };
+        // 데이터: 헤더 다음 행부터 끝까지
+        for (let i = headerRowIdx + 1; i < aoa.length; i++) {
+          const r = aoa[i];
+          if (!Array.isArray(r)) continue;
+          // 전부 빈 행은 스킵 — 단, "한 개라도 값이 있으면" 시도
+          const hasAny = r.some(v => v !== null && v !== undefined && String(v).trim() !== '');
+          if (!hasAny) continue;
+
+          const get = (k) => (idx[k] >= 0 ? r[idx[k]] : null);
+
+          // 색상 판정 — 1차상담원 셀(주력) 또는 첫 데이터 셀의 fill
+          // FF00FF00 (밝은 초록) = PAID, 그 외 = UNPAID
+          let cellColor = null;
+          const probeCols = [idx.consultant, idx.customer, idx.phone, idx.amount].filter(c => c >= 0);
+          for (const c of probeCols) {
+            const addr = cellAddr(i, c);
+            const cc = fillColors.get(addr);
+            if (cc && cc !== 'FFFFFFFF' && cc !== '00000000' && cc !== null) {
+              cellColor = cc;
+              break;
+            }
+            if (!cellColor && cc) cellColor = cc; // fallback
           }
-          if (tmName && !tmId) errors.push(`${idx+2}행: TM '${tmName}' 미존재 (담당자 미지정으로 등록)`);
-          rows.push(order);
-        });
-        const preview = rows.slice(0,3).map((r,i)=>`${i+1}. ${r.customer_name||'(이름없음)'} · ${r.customer_phone||'-'} · ₩${Number(r.amount||0).toLocaleString()} · ${r.status==='PAID'?'입금완료':'미입금'}`).join('\n');
-        const errMsg = errors.length ? `\n\n⚠ 경고 ${errors.length}건:\n${errors.slice(0,5).join('\n')}${errors.length>5?`\n외 ${errors.length-5}건`:''}` : '';
-        if (!confirm(`엑셀 양식에서 ${rows.length}건을 PB 내역에 추가합니다.\n\n미리보기 (최대 3건):\n${preview}${rows.length>3?`\n...외 ${rows.length-3}건`:''}${errMsg}\n\n진행하시겠습니까?`)) return;
-        let ok=0, fail=0; const failMsgs=[];
-        // 직렬 처리 — 서버 부담/순서 보장
-        for (let i=0;i<rows.length;i++){
-          try{
-            const r = await api('/api/sales/orders',{method:'POST',body:rows[i]});
-            if (r.order) State.salesOrders.unshift(r.order);
-            ok++;
-          }catch(e){ fail++; failMsgs.push(`${i+2}행: ${e.message}`); }
+          const isGreen = cellColor && /^FF00FF00$/i.test(cellColor);
+          const status = isGreen ? 'PAID' : 'UNPAID';
+          if (isGreen) colorStats.paid++;
+          else {
+            colorStats.unpaid++;
+            if (cellColor && cellColor !== 'FFFFFFFF' && cellColor !== '00000000') {
+              colorStats.special[cellColor] = (colorStats.special[cellColor]||0)+1;
+            }
+          }
+
+          const consultantRaw = String(get('consultant')||'').trim();
+          const tmId = consultantRaw ? (tmByName.get(consultantRaw) || null) : null;
+
+          const noteRaw = String(get('note')||'').trim();
+          // 특이색은 추가내용에 색 정보 append (추적용)
+          let noteFinal = noteRaw || null;
+          if (cellColor && !isGreen && cellColor !== 'FFFFFFFF' && cellColor !== '00000000') {
+            noteFinal = (noteRaw ? noteRaw + ' ' : '') + `[색:${cellColor}]`;
+          }
+
+          rowsOut.push({
+            tm_user_id: tmId,
+            consultant_name: consultantRaw || null,
+            customer_name: String(get('customer')||'').trim() || null,
+            customer_phone: String(get('phone')||'').trim() || null,
+            carrier: normalizeCarrier(get('carrier')),
+            consult_date: toYmd(get('actDate')),
+            payment_bank: String(get('bank')||'').trim() || null,
+            payment_account: String(get('account')||'').trim() || null,
+            amount: Number(String(get('amount')||'0').replace(/[^0-9.-]/g,'')) || 0,
+            payment_date: toYmd(get('payDate')),
+            blank1: String(get('blank1')||'').trim() || null,
+            blank2: String(get('blank2')||'').trim() || null,
+            note: noteFinal,
+            status,
+          });
+        }
+
+        const totalAmt = rowsOut.reduce((s,r)=>s+Number(r.amount||0), 0);
+        const preview = rowsOut.slice(0,3).map((r,i)=>`${i+1}. ${r.consultant_name||'(상담원없음)'} → ${r.customer_name||'(이름없음)'} · ₩${Number(r.amount||0).toLocaleString()} · ${r.status==='PAID'?'입금완료':'미입금'}`).join('\n');
+        const specialColors = Object.entries(colorStats.special).map(([k,v])=>`${k}:${v}건`).join(', ');
+        if (!confirm(
+          `엑셀에서 ${rowsOut.length}건 추가 (총 ₩${totalAmt.toLocaleString()})\n`+
+          `· 입금완료(초록): ${colorStats.paid}건\n`+
+          `· 미입금(흰색/기타): ${colorStats.unpaid}건${specialColors?` (특이색: ${specialColors})`:''}\n\n`+
+          `미리보기:\n${preview}${rowsOut.length>3?`\n...외 ${rowsOut.length-3}건`:''}\n\n`+
+          `진행하시겠습니까?`
+        )) return;
+
+        // bulk insert — 청크 500건씩 직렬 호출 (Vercel 30초 limit 안전)
+        showToast(`업로드 시작 — ${rowsOut.length}건...`);
+        let totalInserted = 0, totalSkipped = 0;
+        const allErrors = [];
+        const CHUNK = 500;
+        for (let i = 0; i < rowsOut.length; i += CHUNK) {
+          const slice = rowsOut.slice(i, i + CHUNK);
+          try {
+            const resp = await api('/api/sales/orders?bulk=1', {method:'POST', body:{rows: slice}});
+            totalInserted += (resp.inserted||0);
+            totalSkipped  += (resp.skipped||0);
+            if (resp.errors?.length) allErrors.push(...resp.errors);
+            showToast(`업로드 중 — ${totalInserted}/${rowsOut.length}`);
+          } catch (e) {
+            totalSkipped += slice.length;
+            allErrors.push({error: `청크 ${i}~${i+slice.length-1}: ${e.message}`});
+          }
         }
         State.salesOrdersLoadedYm = null;
         loadSalesContext('sales-orders').finally(()=>{ State.loadingPage=null; renderApp(); });
-        alert(`업로드 완료 — 성공 ${ok}건${fail?` / 실패 ${fail}건\n${failMsgs.slice(0,5).join('\n')}`:''}`);
+        alert(
+          `업로드 완료\n`+
+          `· 등록: ${totalInserted}건\n`+
+          `· 실패: ${totalSkipped}건\n`+
+          (allErrors.length?`\n에러 (최대 5건):\n${allErrors.slice(0,5).map(e=>e.error||String(e)).join('\n')}`:'')
+        );
       }catch(e){
+        console.error(e);
         alert('엑셀 파싱 실패: '+e.message);
       }
     });
@@ -3835,19 +4044,21 @@ function renderSalesOrders(){
     wrap.append(bulkBar);
   }
 
-  // 표 — 유입처 컬럼 제거 (요청)
+  // 표 — 12행 컬럼 (대표 지시 2026-06-01, 엑셀 시트와 동일 순서)
   const cols=[
-    {k:'tm_user_id',label:'TM',type:'tm',w:80},
-    {k:'consult_date',label:'개통일자',type:'date',w:96},
+    {k:'consultant_name',label:'1차상담원',type:'text',w:100,
+      val:(r)=> r.consultant_name || r.tm_name || ''},
     {k:'customer_name',label:'고객명',type:'text',w:90},
     {k:'customer_phone',label:'전화번호',type:'text',w:120},
     {k:'carrier',label:'통신사',type:'carrier',w:60},
-    {k:'amount',label:'금액',type:'amount',w:90},
-    {k:'payment_bank',label:'은행',type:'text',w:80},
-    {k:'payment_account',label:'계좌',type:'text',w:130},
-    {k:'payment_date',label:'입금일',type:'date',w:96},
-    {k:'status',label:'상태',type:'status',w:100},
-    {k:'note',label:'메모',type:'text',w:160},
+    {k:'consult_date',label:'개통일자',type:'date',w:96},
+    {k:'payment_bank',label:'은행명',type:'text',w:80},
+    {k:'payment_account',label:'계좌',type:'text',w:140},
+    {k:'amount',label:'금액',type:'amount',w:100},
+    {k:'payment_date',label:'완료일자',type:'date',w:96},
+    {k:'blank1',label:'공란1',type:'text',w:90},
+    {k:'blank2',label:'공란2',type:'text',w:90},
+    {k:'note',label:'추가내용',type:'text',w:200},
   ];
   // 헤더 체크박스 — 현재 필터 결과 전체 토글
   const headChk = h('input',{type:'checkbox',style:'cursor:pointer'});
@@ -3913,7 +4124,8 @@ function renderSalesOrders(){
           cell.append(h('span',{class:'dup-badge phone', title:'동일 전화번호로 다른 PB가 존재함'},'☢'));
         }
       }
-      cell.append(renderOrderCell(c, r[c.k], r));
+      const cellVal = c.val ? c.val(r) : r[c.k];
+      cell.append(renderOrderCell(c, cellVal, r));
       tr.append(td);
     }
     if (isPriv){
@@ -4165,9 +4377,17 @@ function openOrderModal(existingOrder){
 
   async function submit(){
     const _todayISO = new Date().toISOString().slice(0,10);
+    // 새 필드 (consultant_name/blank1/blank2) — 모달에 입력칸 없으니 기존 값 보존
+    // 1차상담원: tmSel 로 user 변경 시 user.name 으로 갱신, 외엔 기존 consultant_name 유지
+    let consultantName = existingOrder?.consultant_name || null;
+    if (tmSel.value) {
+      const u = State.users.find(x => String(x.id) === String(tmSel.value));
+      if (u) consultantName = u.name;
+    }
     const body = {
       id: existingOrder?.id,
       tm_user_id:     tmSel.value ? Number(tmSel.value) : null,
+      consultant_name: consultantName,
       consult_date:   dateI.value || null,
       customer_name:  nameI.value.trim() || null,
       customer_phone: phoneI.value.trim() || null,
@@ -4180,6 +4400,8 @@ function openOrderModal(existingOrder){
       payment_date:   payDateI.value || (statusSel.value === 'PAID' ? _todayISO : null),
       status:         statusSel.value || 'UNPAID',
       note:           noteI.value.trim() || null,
+      blank1:         existingOrder?.blank1 || null,
+      blank2:         existingOrder?.blank2 || null,
     };
     // 입금 중복 차단 (대표 지시) — 같은 번호로 이미 입금완료된 PB가 있을 때 PAID 로 저장 차단
     if (body.status === 'PAID' && body.customer_phone){
