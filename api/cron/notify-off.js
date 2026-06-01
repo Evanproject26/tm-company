@@ -1,0 +1,153 @@
+// 휴무자 알림 (대표 지시 2026-06-01 — 3단계 정책)
+//   1차 = 휴무 신청 즉시 (api/att/request.js) — "승인대기" 알림
+//   2차 = 휴무 하루 전 KST 12:00 (이 cron, phase=tomorrow)
+//   3차 = 휴무 당일 KST 10:00     (이 cron, phase=today)
+// ADMIN_PHONE 3번호 모두에 카톡+문자 동시 발송 (sendAdminBoth)
+
+import { sql } from '../_db.js';
+import { ALIGO, kstToday, buildOffMessage, sendAdminFriendtalk, sendAdminAlimtalk, sendAdminBoth } from '../_notify.js';
+
+export default async function handler(req, res) {
+  // Vercel Cron 만 호출 가능 (Authorization: Bearer CRON_SECRET)
+  // 수동 테스트도 같은 헤더로 가능 (?force=1 도 허용)
+  const auth = req.headers.authorization || '';
+  const isCron = auth === `Bearer ${ALIGO.cron}`;
+  const isManual = req.query.force === '1';
+  if (!isCron && !isManual) {
+    return res.status(401).json({ error: 'unauthorized — Bearer CRON_SECRET 또는 ?force=1 필요' });
+  }
+
+  // 우리 함수의 외부 IP 확인 — 알리고 화이트리스트 등록용 (대표 지시)
+  // ?whoami=1 → ipify 호출해서 우리 서버 외부 IP 반환
+  if (req.query.whoami === '1') {
+    const samples = [];
+    for (let i = 0; i < 5; i++) {
+      try {
+        const r = await fetch('https://api.ipify.org?format=json');
+        const j = await r.json();
+        samples.push(j.ip);
+      } catch (e) { samples.push('err:' + e.message); }
+    }
+    return res.status(200).json({ samples, unique: [...new Set(samples)] });
+  }
+
+  // 테스트 발송 — ?test=1 알림톡 + SMS 동시 발송 (대표 지시)
+  if (req.query.test === '1') {
+    const r = await sendAdminBoth({
+      name: '테스트', date: kstToday(), type: 'OFF',
+      overrideReceivers: req.query.to
+        ? String(req.query.to).split(/[,\s]+/).filter(Boolean) : null,
+    });
+    return res.status(200).json({ ok: r.ok, mode: 'both-test', alimtalk: r.alimtalk?.sent, sms: r.sms?.sent });
+  }
+
+  // ?seed=2 → 5/22 자 2차 직원 2명 임의 휴무(연차) 등록 + 알림톡+SMS 동시 발송 (대표 지시)
+  // ?reset=1 도 같이 주면 attendance_records 전체 초기화 후 시드
+  if (req.query.seed === '2') {
+    const seedDate = req.query.date || '2026-05-22';
+    if (req.query.reset === '1') {
+      await sql`DELETE FROM attendance_records`;
+    }
+    const candidates = await sql`
+      SELECT id, name FROM users
+      WHERE tier = 2 AND name NOT IN ('2','3')
+      ORDER BY id ASC LIMIT 2
+    `;
+    if (candidates.length < 2) {
+      return res.status(400).json({ error: '2차 직원 2명 미만', found: candidates });
+    }
+    const overrideReceivers = req.query.to
+      ? String(req.query.to).split(/[,\s]+/).filter(Boolean) : ['01043008739'];
+    // 승인대기(REQUESTED) 로 등록 — 대표 지시: "승인대기에 떠야 한다"
+    const seeded = [];
+    for (const u of candidates) {
+      const rows = await sql`
+        INSERT INTO attendance_records (user_id, work_date, type, status, requested_at, approved_by, approved_at)
+        VALUES (${u.id}, ${seedDate}, 'ANNUAL', 'REQUESTED', NOW(), NULL, NULL)
+        ON CONFLICT (user_id, work_date) DO UPDATE
+          SET type = 'ANNUAL', status = 'REQUESTED', requested_at = NOW(),
+              approved_by = NULL, approved_at = NULL, reject_reason = NULL
+        RETURNING *
+      `;
+      const r = await sendAdminBoth({
+        name: u.name, date: seedDate, type: 'ANNUAL', overrideReceivers,
+      });
+      seeded.push({ user: u.name, record_id: rows[0]?.id, notify: r.ok });
+    }
+    return res.status(200).json({ ok: true, mode: 'seed-2', date: seedDate, seeded });
+  }
+
+  // ?fix=requested → 5/22 자 강보람·국나래 (record_id 31·32) status를 REQUESTED 로 정정 (알림 안 쏨)
+  if (req.query.fix === 'requested') {
+    const r = await sql`
+      UPDATE attendance_records
+         SET status = 'REQUESTED', approved_by = NULL, approved_at = NULL,
+             reject_reason = NULL, requested_at = NOW()
+       WHERE id IN (31, 32)
+      RETURNING id, user_id, work_date, status
+    `;
+    return res.status(200).json({ ok: true, mode: 'fix-requested', updated: r });
+  }
+
+  // ?phase=tomorrow → 하루 전 알림 (KST 12:00 cron, 2차)
+  // ?phase=today    → 당일 알림 (KST 10:00 cron, 3차)
+  // default = tomorrow (대표 지시 2026-06-01 — 3단계 정책)
+  const phase = (req.query.phase === 'today') ? 'today' : 'tomorrow';
+
+  // ?date=YYYY-MM-DD 로 임의 날짜 강제 (테스트용). 미지정 시 phase 기준 자동 계산
+  let targetDate;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '')) {
+    targetDate = req.query.date;
+  } else {
+    const todayStr = kstToday();
+    if (phase === 'tomorrow') {
+      const d = new Date(todayStr + 'T00:00:00Z');
+      d.setUTCDate(d.getUTCDate() + 1);
+      targetDate = d.toISOString().slice(0, 10);
+    } else {
+      targetDate = todayStr;
+    }
+  }
+  // ?to=01043008739,01012345678 — 특정 번호로만 발송 (테스트 1회용, 대표 지시)
+  const overrideReceivers = req.query.to
+    ? String(req.query.to).split(/[,\s]+/).filter(Boolean)
+    : null;
+
+  // 대상 휴무자 — REJECTED 만 제외하고 REQUESTED/APPROVED 둘 다 메시지 포함 (대표 지시)
+  const rows = await sql`
+    SELECT a.type, u.name, u.tier
+    FROM attendance_records a
+    JOIN users u ON u.id = a.user_id
+    WHERE a.work_date = ${targetDate}
+      AND a.status <> 'REJECTED'
+      AND a.type <> 'WORK'
+      AND u.name NOT IN ('2','3')
+    ORDER BY u.tier ASC, u.name ASC
+  `;
+
+  if (!rows.length) {
+    return res.status(200).json({ ok: true, phase, date: targetDate, count: 0, sent: false, note: `${phase==='tomorrow'?'내일':'오늘'} 휴무자 없음 — 발송 안 함` });
+  }
+
+  // 휴무자 1명당 알림톡+SMS 동시 발송 (대표 지시 — 검증 기간 둘 다 받기)
+  const perPerson = await Promise.all(
+    rows.map(r => sendAdminBoth({
+      name: r.name, date: targetDate, type: r.type, overrideReceivers,
+    }))
+  );
+  const message = buildOffMessage({ rows, date: targetDate });
+  const result = {
+    ok: perPerson.every(p => p.ok),
+    sent: perPerson.flatMap(p => [...(p.alimtalk?.sent || []), ...(p.sms?.sent || [])]),
+  };
+
+  return res.status(200).json({
+    ok: result.ok,
+    phase,
+    date: targetDate,
+    count: rows.length,
+    sent: true,
+    aligo: result.sent,
+    preview: message,
+  });
+}
