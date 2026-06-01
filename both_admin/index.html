@@ -4069,7 +4069,7 @@ function renderSalesOrders(){
 
   // 표 — 12행 컬럼 (대표 지시 2026-06-01, 엑셀 시트와 동일 순서)
   const cols=[
-    {k:'consultant_name',label:'1차상담원/일자',type:'text',w:100,
+    {k:'consultant_name',label:'1차상담원/일자',type:'text',w:80,
       val:(r)=> r.consultant_name || r.tm_name || ''},
     {k:'customer_name',label:'고객명',type:'text',w:90},
     {k:'customer_phone',label:'전화번호',type:'text',w:120},
