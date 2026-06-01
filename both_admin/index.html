@@ -1445,7 +1445,7 @@ function renderTopbar(){
       loadMonth().then(renderApp);
     };
     actions.append(
-      h('button',{class:'btn',onClick:exportCsv,title:'CSV로 내보내기'},'내보내기'),
+      h('button',{class:'btn',onClick:exportXlsx,title:'팀 캘린더를 엑셀(.xlsx)로 다운로드'},'📥 엑셀 다운로드'),
       h('div',{class:'month-picker'},
         h('button',{class:'icon-btn',onClick:()=>change(-1),title:'이전 달 (←)'},'‹'),
         h('div',{class:'month-label'},`${y}년 ${m}월`),
@@ -4500,7 +4500,18 @@ function renderSalesTM(){
       }});
       State.salesTmLoadedKey = null;
       await loadSalesContext('sales-tm');
+      // renderApp 으로 DOM 재생성되면 활성 셀 포커스 날아감 → 좌표 저장 후 복원
+      const act = document.activeElement;
+      const isSheet = act && act.classList && act.classList.contains('sheet-input');
+      const fR = isSheet ? act.dataset.r : null;
+      const fC = isSheet ? act.dataset.c : null;
       renderApp();
+      if (fR !== null && fC !== null){
+        requestAnimationFrame(()=>{
+          const el = document.querySelector(`.sheet-input[data-r="${fR}"][data-c="${fC}"]`);
+          if (el){ el.focus(); try{ el.select(); }catch(_){} }
+        });
+      }
     }catch(e){ alert(e.message); }
   }
   function editableMonthCell(uid, key, val, rowIdx, colIdx){
@@ -4715,9 +4726,14 @@ function renderSalesTMDaily(){
     if (r) colDefs.forEach(c=>{ sum[c.key] += Number(r[c.key]||0); });
   });
 
+  // colgroup — 구분 열 고정 너비 + 나머지 10개 컬럼 균등 너비
+  const colgroup=h('colgroup',null,
+    h('col',{style:'width:160px'}),
+    ...colDefs.map(()=>h('col',{style:'width:auto'}))
+  );
   const thead=h('thead',null,h('tr',null,
     h('th',{style:'text-align:left'},'구분'),
-    ...colDefs.map(c=>h('th',{style:`background:${c.headBg};color:${c.headFg}`}, c.label))
+    ...colDefs.map(c=>h('th',{style:`background:${c.headBg};color:${c.headFg};text-align:center`}, c.label))
   ));
   const tbody=h('tbody');
 
@@ -4730,7 +4746,18 @@ function renderSalesTMDaily(){
       const merged = { ...(idx>=0?State.salesTmDailyRows[idx]:{}), ...r.row };
       if (idx>=0) State.salesTmDailyRows[idx] = merged;
       else State.salesTmDailyRows.push(merged);
+      // renderApp 으로 DOM 통째 재생성되면 활성 셀 포커스 날아감 → 좌표 저장 후 복원
+      const act = document.activeElement;
+      const isSheet = act && act.classList && act.classList.contains('sheet-input');
+      const fR = isSheet ? act.dataset.r : null;
+      const fC = isSheet ? act.dataset.c : null;
       renderApp();
+      if (fR !== null && fC !== null){
+        requestAnimationFrame(()=>{
+          const el = document.querySelector(`.sheet-input[data-r="${fR}"][data-c="${fC}"]`);
+          if (el){ el.focus(); try{ el.select(); }catch(_){} }
+        });
+      }
     }catch(e){ alert(e.message); }
   }
 
@@ -4787,12 +4814,12 @@ function renderSalesTMDaily(){
     );
     tbody.append(tr);
   }
-  // 합계 행
+  // 합계 행 — 데이터 셀과 동일하게 가운데 정렬
   tbody.append(h('tr',{class:'total-row'},
     h('td',null,'합계'),
-    ...colDefs.map(c=>h('td',{style:'text-align:right;font-variant-numeric:tabular-nums;font-weight:800'}, fmtNum(sum[c.key])))
+    ...colDefs.map(c=>h('td',{style:'text-align:center;font-variant-numeric:tabular-nums;font-weight:800'}, fmtNum(sum[c.key])))
   ));
-  const table=h('table',{class:'tm-table'}, thead, tbody);
+  const table=h('table',{class:'tm-table',style:'table-layout:fixed'}, colgroup, thead, tbody);
   const tableWrap=h('div',{class:'orders-wrap',style:'overflow:auto'}, table);
   wrap.append(tableWrap);
 
@@ -5196,8 +5223,8 @@ if(!window._shBound){
         if(!cur || !cur.classList || !cur.classList.contains('sheet-input')){ _shStopNav(); return; }
         const ok = _shMoveOnce(cur, _shNav.dir);
         if(!ok) _shStopNav();
-      }, 25);
-    }, 100);
+      }, 150);
+    }, 300);
   }, true);
   // 마우스 드래그 — sheet-cell 위를 드래그하면 범위 선택
   document.addEventListener('mousedown', e=>{
@@ -5602,7 +5629,54 @@ function vendorCell(v, key, label, isPriv){
   return cell;
 }
 
-// ───────── CSV 내보내기 ─────────
+// ───────── 엑셀 내보내기 (팀 캘린더) — 화면에 보이는 그대로 ─────────
+function exportXlsx(){
+  if(typeof XLSX === 'undefined'){ alert('엑셀 라이브러리 로드 실패'); return; }
+  const [y,m]=State.ym.split('-').map(Number);
+  const dim=daysInMonth(y,m);
+  const recIdx={};
+  for(const r of State.records){
+    if(r.status!=='APPROVED') continue;
+    const dateStr=String(r.work_date).slice(0,10);
+    recIdx[`${r.user_id}|${dateStr}`]=r;
+  }
+  const dowLabels=['일','월','화','수','목','금','토'];
+  // 헤더 — 2줄 (일자/요일 + 공휴일)
+  const head1=['이름','역할'];
+  const head2=['',''];
+  for(let d=1;d<=dim;d++){
+    const dow=new Date(y,m-1,d).getDay();
+    const ymd=fmtYmd(y,m,d);
+    head1.push(`${d}(${dowLabels[dow]})`);
+    head2.push(krHolidayName(ymd) || '');
+  }
+  const aoa=[head1, head2];
+  for(const u of State.users){
+    if(u.name==='2' || u.name==='3') continue; // viewer 계정 비노출
+    const row=[u.name, u.role==='manager'?'차장':(u.role==='admin'?'대표':'직원')];
+    for(let d=1;d<=dim;d++){
+      const dow=new Date(y,m-1,d).getDay();
+      const ymd=fmtYmd(y,m,d);
+      const isHoliday=!!krHolidayName(ymd);
+      const isOff=(dow===0||dow===6||isHoliday);
+      const r=recIdx[`${u.id}|${ymd}`];
+      if(r) row.push(TYPE_LABELS[r.type]||'');
+      else if(isOff) row.push('');
+      else row.push('정상');
+    }
+    aoa.push(row);
+  }
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:12},{wch:7},...Array(dim).fill({wch:7})];
+  // 윗 두 행 헤더로 고정 + 이름/역할 열 고정
+  ws['!freeze']={xSplit:2, ySplit:2};
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `${y}년 ${m}월`);
+  XLSX.writeFile(wb, `팀캘린더_${State.ym}.xlsx`);
+  showToast('엑셀 다운로드 완료');
+}
+
+// ───────── CSV 내보내기 (호환용 보존) ─────────
 function exportCsv(){
   const [y,m]=State.ym.split('-').map(Number);
   const dim=daysInMonth(y,m);
