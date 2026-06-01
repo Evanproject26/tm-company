@@ -1466,7 +1466,8 @@ function renderTopbar(){
 
 // ─── 직원 '내 마감' 페이지 (요청 2 — 일단위 입력 → 자동 월 누적) ───
 async function loadMyClosing(force){
-  const ym = State.salesYm || todayYm();
+  let ym = State.salesYm;
+  if (!ym || !/^\d{4}-\d{2}$/.test(ym)) ym = todayYm();
   State.salesYm = ym;
   if (!force && State.myClosingLoadedYm === ym) return;
   try{
@@ -3392,8 +3393,9 @@ async function loadSalesContext(page, force){
     }
   } else if (page==='sales-tm-daily'){
     const today = new Date().toISOString().slice(0,10);
-    if (!State.salesTmDailyFrom) State.salesTmDailyFrom = today;
-    if (!State.salesTmDailyTo)   State.salesTmDailyTo   = today;
+    const isYmd = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+    if (!isYmd(State.salesTmDailyFrom)) State.salesTmDailyFrom = today;
+    if (!isYmd(State.salesTmDailyTo))   State.salesTmDailyTo   = today;
     const f = State.salesTmDailyFrom, t = State.salesTmDailyTo;
     const key = `${f}|${t}`;
     if (force || State.salesTmDailyLoadedKey !== key){
@@ -3404,8 +3406,9 @@ async function loadSalesContext(page, force){
       }));
     }
   } else if (page==='sales-vendor'){
-    const d=State.salesDate || (new Date().toISOString().slice(0,10));
-    State.salesDate=d;
+    let d = State.salesDate;
+    if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) d = new Date().toISOString().slice(0,10);
+    State.salesDate = d;
     if (force || State.salesVendorLoadedDate !== d){
       tasks.push(api(`/api/sales/vendor-daily?date=${d}`).then(r=>{
         State.salesVendorRows = r.vendors || [];
