@@ -4738,8 +4738,18 @@ function renderSalesTMDaily(){
       const merged = { ...(idx>=0?State.salesTmDailyRows[idx]:{}), ...r.row };
       if (idx>=0) State.salesTmDailyRows[idx] = merged;
       else State.salesTmDailyRows.push(merged);
-      // 일 TM 마감 입력 → 월 TM 마감 합산 자동 갱신을 위해 캐시 무효화
+      // 일 TM 마감 입력 → 월 TM 마감 합산 즉시 갱신 (페이지 전환 의존 없이)
       State.salesTmLoadedKey = null;
+      // 같은 user_id 의 일별 db_count/count SUM 을 다시 계산해서 salesTmRows 에 즉시 반영
+      try{
+        const sameUserRows = (State.salesTmDailyRows||[]).filter(x=>x.user_id===uid);
+        const sumDb    = sameUserRows.reduce((s,x)=>s+Number(x.db_count||0),0);
+        const sumCount = sameUserRows.reduce((s,x)=>s+Number(x.count||0),0);
+        const tmIdx = (State.salesTmRows||[]).findIndex(rr=>rr.user_id===uid);
+        if (tmIdx >= 0){
+          State.salesTmRows[tmIdx] = { ...State.salesTmRows[tmIdx], total_db: sumDb, total_count: sumCount, is_overridden: false };
+        }
+      }catch(_){}
       // renderApp 으로 DOM 통째 재생성되면 활성 셀 포커스 날아감 → 좌표 저장 후 복원
       const act = document.activeElement;
       const isSheet = act && act.classList && act.classList.contains('sheet-input');
