@@ -3786,7 +3786,18 @@ function renderSalesOrders(){
             }
             if (!cellColor && cc) cellColor = cc; // fallback
           }
-          const isGreen = cellColor && /^FF00FF00$/i.test(cellColor);
+          // 초록 판정 — 밝은 초록(FF00FF00) + 다크 그린(FF0B8043, FF38761D 등) 모두 PAID
+          // 알고리즘: G 채널이 R·B 보다 충분히 dominant 하면 초록 (노랑/주황/빨강 자동 배제)
+          const isGreen = (function(c){
+            if (!c) return false;
+            const hex = (c.length === 8 ? c.slice(2) : c).toUpperCase();
+            if (!/^[0-9A-F]{6}$/.test(hex)) return false;
+            const r = parseInt(hex.slice(0,2),16);
+            const g = parseInt(hex.slice(2,4),16);
+            const b = parseInt(hex.slice(4,6),16);
+            // G가 R·B 보다 20+ 높고, G≥60 (너무 어두운 색 제외)
+            return g >= 60 && g > r + 20 && g > b + 20;
+          })(cellColor);
           const status = isGreen ? 'PAID' : 'UNPAID';
           if (isGreen) colorStats.paid++;
           else {
