@@ -267,16 +267,16 @@ export default requireAuth(async function handler(req, res) {
     const rows = users.map(u => {
       const d = dMap[u.id] || { total_count: 0, total_db: 0 };
       const a = attMap[u.id] || { off_full: 0, off_half: 0 };
-      const m = mMap[u.id]; // monthly override — 행이 존재하면 무조건 우선 (0 포함, 대표 지시: Delete = 0 표시)
       const offDays = Number(a.off_full) + Number(a.off_half) * 0.5;
+      // override 폐기 (대표 지시 2026-06-01) — 일 TM 마감 SUM 을 월 TM 마감에 항상 그대로 연동
+      // sales_tm_monthly 행이 있어도 화면에서는 무시 → 일디비 = 월디비 자동 합산
       return {
         user_id: u.id, name: u.name, role: u.role,
-        // monthly override row 가 존재하면 그 값 사용 (Delete로 0 만든 것도 유지). 없으면 자동 합산
-        total_count: m ? Number(m.total_count || 0) : d.total_count,
-        total_db:    m ? Number(m.total_db || 0) : d.total_db,
+        total_count: d.total_count,
+        total_db:    d.total_db,
         off_days: offDays,
         half_days: Number(a.off_half),
-        is_overridden: !!m,
+        is_overridden: false,
       };
     });
 
