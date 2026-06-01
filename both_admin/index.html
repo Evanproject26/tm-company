@@ -395,13 +395,13 @@
   .orders-table tr.row-status-PAID:hover td{background:#a7f3d0}
   .orders-table tr.row-status-PAID td:first-child::before{background:#10b981;width:4px}
 
-  /* 미입금 — 빨강 */
+  /* 미입금 — 흰색 (대표 지시: 엑셀 하얀색 = 미입금, 깔끔하게 흰색 톤) */
   .orders-table tr.row-status-UNPAID td,
-  .orders-table tr.row-status-UNPAID_PROOF td{background:#fee2e2}
+  .orders-table tr.row-status-UNPAID_PROOF td{background:#fff}
   .orders-table tr.row-status-UNPAID:hover td,
-  .orders-table tr.row-status-UNPAID_PROOF:hover td{background:#fecaca}
+  .orders-table tr.row-status-UNPAID_PROOF:hover td{background:#fafaf8}
   .orders-table tr.row-status-UNPAID td:first-child::before,
-  .orders-table tr.row-status-UNPAID_PROOF td:first-child::before{background:#ef4444;width:4px}
+  .orders-table tr.row-status-UNPAID_PROOF td:first-child::before{background:transparent;width:0}
 
   .orders-table tr.row-status-IN_PROGRESS td{background:#fef3c7}
   .orders-table tr.row-status-IN_PROGRESS:hover td{background:#fde68a}
