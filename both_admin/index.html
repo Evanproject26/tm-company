@@ -373,7 +373,8 @@
 
   /* 거래 표 (요청 4) */
   .orders-wrap{padding:14px 24px 60px}
-  .orders-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .orders-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:13px;background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .orders-table td,.orders-table th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .orders-table thead th{background:#fbfaf8;color:var(--text-soft);font-size:11px;font-weight:700;letter-spacing:0.03em;text-align:left;padding:10px 12px;border-bottom:1px solid var(--border-soft);position:sticky;top:0}
   .orders-table tbody td{padding:0;border-bottom:1px solid var(--border-soft);vertical-align:middle}
   .orders-table tbody tr:last-child td{border-bottom:none}
@@ -4072,19 +4073,19 @@ function renderSalesOrders(){
   // 표 — 12행 컬럼 (대표 지시 2026-06-01, 엑셀 시트와 동일 순서)
   // 너비 통일 — "추가내용" 제외 모두 동일 (대표 지시)
   const cols=[
-    {k:'consultant_name',label:'1차상담원/일자',type:'text',w:90,
+    {k:'consultant_name',label:'1차상담원/일자',type:'text',w:70,
       val:(r)=> r.consultant_name || r.tm_name || ''},
-    {k:'customer_name',label:'고객명',type:'text',w:90},
-    {k:'customer_phone',label:'전화번호',type:'text',w:90},
-    {k:'carrier',label:'통신사',type:'carrier',w:90},
-    {k:'consult_date',label:'개통일자',type:'date',w:90},
-    {k:'payment_bank',label:'은행명',type:'text',w:90},
-    {k:'payment_account',label:'계좌',type:'text',w:90},
-    {k:'amount',label:'금액',type:'amount',w:90},
-    {k:'payment_date',label:'완료일자',type:'date',w:90},
-    {k:'blank1',label:'',type:'text',w:90},
-    {k:'blank2',label:'',type:'text',w:90},
-    {k:'note',label:'추가내용',type:'text',w:200},
+    {k:'customer_name',label:'고객명',type:'text',w:70},
+    {k:'customer_phone',label:'전화번호',type:'text',w:70},
+    {k:'carrier',label:'통신사',type:'carrier',w:70},
+    {k:'consult_date',label:'개통일자',type:'date',w:70},
+    {k:'payment_bank',label:'은행명',type:'text',w:70},
+    {k:'payment_account',label:'계좌',type:'text',w:70},
+    {k:'amount',label:'금액',type:'amount',w:70},
+    {k:'payment_date',label:'완료일자',type:'date',w:70},
+    {k:'blank1',label:'',type:'text',w:70},
+    {k:'blank2',label:'',type:'text',w:70},
+    {k:'note',label:'추가내용',type:'text',w:70},
   ];
   // 헤더 체크박스 — 현재 필터 결과 전체 토글
   const headChk = h('input',{type:'checkbox',style:'cursor:pointer'});
