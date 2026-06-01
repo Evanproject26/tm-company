@@ -405,6 +405,10 @@ export default requireAuth(async function handler(req, res) {
           recontact   = EXCLUDED.recontact,
           updated_at  = NOW()
         RETURNING *`;
+      // override 자동 해제 — 일 TM 입력이 들어온 그 월의 sales_tm_monthly 행 삭제 → 자동 SUM 복귀
+      // (대표 지시 2026-06-01: 일 TM 디비가 월 TM에 안 오르는 문제 해결. 다른 월은 안 건드림)
+      const ymForDaily = String(b.work_date).slice(0, 7);
+      await sql`DELETE FROM sales_tm_monthly WHERE user_id=${userId} AND year_month=${ymForDaily}`;
       return res.status(200).json({ ok: true, row: rows[0] });
     }
     res.setHeader('Allow', 'GET,POST');

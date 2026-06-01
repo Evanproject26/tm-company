@@ -2268,25 +2268,12 @@ function renderPeople(){
         else if(r.type==='HALF_AM'||r.type==='HALF_PM') cnt.HALF++;
         else if(r.type==='SICK') cnt.SICK++;
       });
-      // 익일 휴무/반차/연차 여부 (마감보고)
+      // 익일 휴무/반차/연차 여부 (마감보고) — 항상 리얼타임 (대표 지시 2026-06-01)
       // 개인 신청 기록이 있으면 그 라벨 우선, 없을 때만 요일 자동 판단 (토/일 → 휴무)
       const tmrRec=State.records.find(r=>r.user_id===u.id && String(r.work_date).slice(0,10)===tomorrowYmd);
-      // 검증용 — URL ?_simdow=N (N=0~6은 '오늘'의 요일) → 내일은 자동 (N+1)%7
-      // 예: ?_simdow=5 (오늘=금) → 내일=토 → '휴무 (토요일)'
-      //     ?_simdow=6 (오늘=토) → 내일=일 → '휴무 (일요일)'
-      //     ?_simdow=0 (오늘=일) → 내일=월 → '정상출근 예정'
-      //     ?_simdow=off → 시뮬 해제
-      // localStorage 저장 → 로그인 리다이렉트로 쿼리 떨어져도 유지
-      const _simToday=(()=>{ try{
-        const q=new URLSearchParams(location.search).get('_simdow');
-        if(q!=null){
-          if(q==='off'||q==='clear'){ localStorage.removeItem('_simdow'); return null; }
-          const n=parseInt(q,10); if(n>=0&&n<=6){ localStorage.setItem('_simdow',String(n)); return n; }
-        }
-        const s=localStorage.getItem('_simdow'); if(s!=null){ const n=parseInt(s,10); if(n>=0&&n<=6) return n; }
-        return null;
-      }catch(_){ return null; } })();
-      const _tmrDow=_simToday!==null?(_simToday+1)%7:_tmr.getDay(); // 0=일, 6=토
+      // 시뮬 옵션 영구 제거 — localStorage 잔재도 청소
+      try{ localStorage.removeItem('_simdow'); }catch(_){}
+      const _tmrDow=_tmr.getDay(); // 0=일, 6=토
       const _isWeekend=_tmrDow===0||_tmrDow===6;
       let tmrType, tmrIsOff, tmrLabel;
       if(tmrRec){
@@ -4484,10 +4471,15 @@ function renderSalesTM(){
   const cols=['구분','총갯수','일평균','마감예상','총 디비','디비평균','디비 효율'];
   // 편집 가능한 컬럼 표시 (대표 지시) — 총갯수/총 디비만 직접 입력 가능
   const EDITABLE_COLS = new Set(['총갯수','총 디비']);
+  // colgroup — 총갯수/총디비 크게(편집 컬럼), 나머지는 동일 (대표 지시)
+  const colWidthMap = {'구분':'14%','총갯수':'18%','일평균':'12%','마감예상':'12%','총 디비':'18%','디비평균':'12%','디비 효율':'14%'};
+  const colgroupM = h('colgroup', null, ...cols.map(c=>h('col',{style:`width:${colWidthMap[c]}`})));
   const thead=h('thead',null,h('tr',null,...cols.map(c=>{
     const m = colMeta[c];
     const label = EDITABLE_COLS.has(c) ? c+' ✏️' : c;
-    return m ? h('th',{style:`background:${m.bg};color:${m.fg}`,title:EDITABLE_COLS.has(c)?'클릭하여 직접 입력 — 비우면 자동 합산':'자동 계산'}, label) : h('th',null,c);
+    return m
+      ? h('th',{style:`background:${m.bg};color:${m.fg};text-align:center`,title:EDITABLE_COLS.has(c)?'클릭하여 직접 입력 — 비우면 자동 합산':'자동 계산'}, label)
+      : h('th',{style:'text-align:center'}, c);
   })));
   const tbody=h('tbody');
 
@@ -4572,15 +4564,15 @@ function renderSalesTM(){
   }
   tbody.append(h('tr',{class:'total-row'},
     h('td',null,'합계'),
-    h('td',null, fmtNum(totalCount)),
-    h('td',null, fmtNum(totalDayAvg,1)),
-    h('td',null, fmtNum(totalProjected,0)),
-    h('td',null, fmtNum(totalDb)),
-    h('td',null, fmtNum(totalDbAvg,0)),
-    h('td',null, fmtPct(totalEff)),
+    h('td',{style:'text-align:center;font-weight:800;font-variant-numeric:tabular-nums'}, fmtNum(totalCount)),
+    h('td',{style:'text-align:center;font-weight:800;font-variant-numeric:tabular-nums'}, fmtNum(totalDayAvg,1)),
+    h('td',{style:'text-align:center;font-weight:800;font-variant-numeric:tabular-nums'}, fmtNum(totalProjected,0)),
+    h('td',{style:'text-align:center;font-weight:800;font-variant-numeric:tabular-nums'}, fmtNum(totalDb)),
+    h('td',{style:'text-align:center;font-weight:800;font-variant-numeric:tabular-nums'}, fmtNum(totalDbAvg,0)),
+    h('td',{style:'text-align:center;font-weight:800;font-variant-numeric:tabular-nums'}, fmtPct(totalEff)),
   ));
 
-  const table=h('table',{class:'tm-table'}, thead, tbody);
+  const table=h('table',{class:'tm-table',style:'table-layout:fixed'}, colgroupM, thead, tbody);
   const tableWrap=h('div',{class:'orders-wrap'}, table);
   wrap.append(tableWrap);
 
@@ -4726,10 +4718,10 @@ function renderSalesTMDaily(){
     if (r) colDefs.forEach(c=>{ sum[c.key] += Number(r[c.key]||0); });
   });
 
-  // colgroup — 구분 열 고정 너비 + 나머지 10개 컬럼 균등 너비
+  // colgroup — 구분 열 + 데이터 10개 열을 % 로 균등 분배 (table-layout:fixed 필수)
   const colgroup=h('colgroup',null,
-    h('col',{style:'width:160px'}),
-    ...colDefs.map(()=>h('col',{style:'width:auto'}))
+    h('col',{style:'width:14%'}),
+    ...colDefs.map(()=>h('col',{style:'width:8.6%'}))
   );
   const thead=h('thead',null,h('tr',null,
     h('th',{style:'text-align:left'},'구분'),
