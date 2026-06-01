@@ -1,5 +1,7 @@
-// 그 날 휴무자 알림 — 매일 1회 KST 12:00 (UTC 03:00) 자동 발송 (대표 지시 2026-05-22)
-// 발송 정책: 휴무 신청 즉시 1차(api/att/request.js) + 휴무일 정오 12시 2차(이 cron) = 총 2회
+// 휴무자 알림 (대표 지시 2026-06-01 — 3단계 정책)
+//   1차 = 휴무 신청 즉시 (api/att/request.js) — "승인대기" 알림
+//   2차 = 휴무 하루 전 KST 12:00 (이 cron, phase=tomorrow)
+//   3차 = 휴무 당일 KST 10:00     (이 cron, phase=today)
 // ADMIN_PHONE 3번호 모두에 카톡+문자 동시 발송 (sendAdminBoth)
 
 import { sql } from '../_db.js';
@@ -87,19 +89,36 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, mode: 'fix-requested', updated: r });
   }
 
-  // ?date=YYYY-MM-DD 로 임의 날짜 미리 발송 (대표 지시 — 테스트용)
-  const today = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '') ? req.query.date : kstToday();
+  // ?phase=tomorrow → 하루 전 알림 (KST 12:00 cron, 2차)
+  // ?phase=today    → 당일 알림 (KST 10:00 cron, 3차)
+  // default = tomorrow (대표 지시 2026-06-01 — 3단계 정책)
+  const phase = (req.query.phase === 'today') ? 'today' : 'tomorrow';
+
+  // ?date=YYYY-MM-DD 로 임의 날짜 강제 (테스트용). 미지정 시 phase 기준 자동 계산
+  let targetDate;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(req.query.date || '')) {
+    targetDate = req.query.date;
+  } else {
+    const todayStr = kstToday();
+    if (phase === 'tomorrow') {
+      const d = new Date(todayStr + 'T00:00:00Z');
+      d.setUTCDate(d.getUTCDate() + 1);
+      targetDate = d.toISOString().slice(0, 10);
+    } else {
+      targetDate = todayStr;
+    }
+  }
   // ?to=01043008739,01012345678 — 특정 번호로만 발송 (테스트 1회용, 대표 지시)
   const overrideReceivers = req.query.to
     ? String(req.query.to).split(/[,\s]+/).filter(Boolean)
     : null;
 
-  // 오늘 휴무자 — REJECTED 만 제외하고 REQUESTED/APPROVED 둘 다 메시지 포함 (대표 지시)
+  // 대상 휴무자 — REJECTED 만 제외하고 REQUESTED/APPROVED 둘 다 메시지 포함 (대표 지시)
   const rows = await sql`
     SELECT a.type, u.name, u.tier
     FROM attendance_records a
     JOIN users u ON u.id = a.user_id
-    WHERE a.work_date = ${today}
+    WHERE a.work_date = ${targetDate}
       AND a.status <> 'REJECTED'
       AND a.type <> 'WORK'
       AND u.name NOT IN ('2','3')
@@ -107,16 +126,16 @@ export default async function handler(req, res) {
   `;
 
   if (!rows.length) {
-    return res.status(200).json({ ok: true, date: today, count: 0, sent: false, note: '오늘 휴무자 없음 — 발송 안 함' });
+    return res.status(200).json({ ok: true, phase, date: targetDate, count: 0, sent: false, note: `${phase==='tomorrow'?'내일':'오늘'} 휴무자 없음 — 발송 안 함` });
   }
 
   // 휴무자 1명당 알림톡+SMS 동시 발송 (대표 지시 — 검증 기간 둘 다 받기)
   const perPerson = await Promise.all(
     rows.map(r => sendAdminBoth({
-      name: r.name, date: today, type: r.type, overrideReceivers,
+      name: r.name, date: targetDate, type: r.type, overrideReceivers,
     }))
   );
-  const message = buildOffMessage({ rows, date: today });
+  const message = buildOffMessage({ rows, date: targetDate });
   const result = {
     ok: perPerson.every(p => p.ok),
     sent: perPerson.flatMap(p => [...(p.alimtalk?.sent || []), ...(p.sms?.sent || [])]),
@@ -124,7 +143,8 @@ export default async function handler(req, res) {
 
   return res.status(200).json({
     ok: result.ok,
-    date: today,
+    phase,
+    date: targetDate,
     count: rows.length,
     sent: true,
     aligo: result.sent,

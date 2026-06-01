@@ -12,7 +12,8 @@
     { "source": "/api/auth/ip-groups", "destination": "/api/auth/signup?__op=ip-groups" }
   ],
   "crons": [
-    { "path": "/api/cron/notify-off", "schedule": "0 3 * * *" }
+    { "path": "/api/cron/notify-off?phase=tomorrow", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/notify-off?phase=today",    "schedule": "0 1 * * *" }
   ],
   "headers": [
     {
