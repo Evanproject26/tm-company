@@ -3,7 +3,7 @@
 // /api/sales/tm-summary, /api/sales/tm-daily, /api/sales/vendor-daily
 import { sql, requireAuth, readJson, ensureSchema } from '../_db.js';
 
-const ORDER_STATUS = new Set(['PAID','IN_PROGRESS','UNPAID','UNPAID_PROOF','PARTIAL','CANCELLED']);
+const ORDER_STATUS = new Set(['PAID','IN_PROGRESS','UNPAID','UNPAID_PROOF','PARTIAL','CANCELLED','RESERVED']);
 
 function weekdaysInMonth(y, m) {
   const dim = new Date(y, m, 0).getDate();
@@ -156,6 +156,7 @@ export default requireAuth(async function handler(req, res) {
             status = ${status}, note = ${b.note || null},
             consultant_name = ${b.consultant_name || null},
             blank1 = ${b.blank1 || null}, blank2 = ${b.blank2 || null},
+            reserved_date = ${b.reserved_date || null},
             updated_at = NOW()
           WHERE id = ${b.id} RETURNING *`;
         return res.status(200).json({ ok: true, order: rows[0] });
@@ -164,13 +165,14 @@ export default requireAuth(async function handler(req, res) {
         INSERT INTO sales_orders
           (tm_user_id, vendor_id, customer_name, customer_phone, carrier, consult_date,
            payment_bank, payment_account, amount, payment_date, status, note,
-           consultant_name, blank1, blank2)
+           consultant_name, blank1, blank2, reserved_date)
         VALUES
           (${tmId}, ${b.vendor_id || null}, ${b.customer_name || null}, ${b.customer_phone || null},
            ${b.carrier || null}, ${b.consult_date || null}, ${b.payment_bank || null},
            ${b.payment_account || null}, ${Number(b.amount || 0)}, ${b.payment_date || null},
            ${status}, ${b.note || null},
-           ${b.consultant_name || null}, ${b.blank1 || null}, ${b.blank2 || null})
+           ${b.consultant_name || null}, ${b.blank1 || null}, ${b.blank2 || null},
+           ${b.reserved_date || null})
         RETURNING *`;
       const enriched = await sql`
         SELECT o.*, u.name AS tm_name, v.code AS vendor_code, v.label AS vendor_label,

@@ -29,8 +29,8 @@ const ADMIN_DEFAULT_PW = '1';
 // 테스트 계정 '2','3' 은 폐기 — DB 에 있으면 마이그레이션이 제거 (직원 목록·PB TM 드롭다운에서도 자동 사라짐)
 
 // 스키마 마커 — 이 버전이 DB에 기록되어 있으면 ensureSchema 풀실행 스킵
-// v25 = PB 내역 신규 컬럼 (consultant_name / blank1 / blank2) 추가 (대표 지시 2026-06-01)
-const SCHEMA_VERSION = 25;
+// v26 = PB 예약(RESERVED) 상태 + reserved_date 컬럼 추가 (대표 지시 2026-06-02)
+const SCHEMA_VERSION = 26;
 const DEMO_DUP_MARKER = 22;
 // 1회용 시드 마커 — 이 버전이 _schema_init 에 기록된 적 있으면 bulk seed 건너뜀 (이후 SCHEMA_VERSION 더 올려도 재시드 안 됨)
 // v18 = 직원 일부 누락 발견 → 강제 재시드 (1차 12 + 2차 16 = 28명 전부 복구)
@@ -290,14 +290,16 @@ export async function ensureSchema() {
     await sql`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_ip_mode_check`;
     await sql`ALTER TABLE users ADD CONSTRAINT users_ip_mode_check CHECK (ip_mode IN ('all','restricted'))`;
     await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_group_ids INT[] NOT NULL DEFAULT '{}'`;
-    // PB 내역 상태 — 'UNPAID_PROOF'(미입금:입금증필요) 추가
+    // PB 내역 상태 — 'RESERVED'(예약: 미래 지급 예정) 추가 (대표 지시 2026-06-02)
     await sql`ALTER TABLE sales_orders DROP CONSTRAINT IF EXISTS sales_orders_status_check`;
     await sql`ALTER TABLE sales_orders ADD CONSTRAINT sales_orders_status_check
-        CHECK (status IN ('PAID','IN_PROGRESS','UNPAID','UNPAID_PROOF','PARTIAL','CANCELLED'))`;
+        CHECK (status IN ('PAID','IN_PROGRESS','UNPAID','UNPAID_PROOF','PARTIAL','CANCELLED','RESERVED'))`;
     // PB 내역 새 컬럼 — 1차상담원 자유텍스트 + 공란 2개 (대표 지시 2026-06-01)
     await sql`ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS consultant_name TEXT`;
     await sql`ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS blank1 TEXT`;
     await sql`ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS blank2 TEXT`;
+    // 예약일자 — RESERVED 상태 행의 지급 예정일 (대표 지시 2026-06-02)
+    await sql`ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS reserved_date DATE`;
     await Promise.all([
       sql`ALTER TABLE applications ADD COLUMN IF NOT EXISTS downloaded_at TIMESTAMPTZ NULL`,
       // 직원 분류 구분 (1차직원 / 2차직원) — 가입 시 선택, NULL = 미선택 = 레거시(2차 기본)
