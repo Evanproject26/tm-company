@@ -337,16 +337,18 @@ export default requireAuth(async function handler(req, res) {
     const rows = users.map(u => {
       const d = dMap[u.id] || { total_count: 0, total_db: 0 };
       const a = attMap[u.id] || { off_full: 0, off_half: 0 };
+      const m = mMap[u.id];
       const offDays = Number(a.off_full) + Number(a.off_half) * 0.5;
-      // override 폐기 (대표 지시 2026-06-01) — 일 TM 마감 SUM 을 월 TM 마감에 항상 그대로 연동
-      // sales_tm_monthly 행이 있어도 화면에서는 무시 → 일디비 = 월디비 자동 합산
+      // 대표 지시 2026-06-02 부활: sales_tm_monthly 값이 있으면 override 우선 사용, 없으면 일 TM SUM 자동 합산
+      const tc = (m && m.total_count !== null && m.total_count !== undefined) ? Number(m.total_count) : d.total_count;
+      const td = (m && m.total_db    !== null && m.total_db    !== undefined) ? Number(m.total_db)    : d.total_db;
       return {
         user_id: u.id, name: u.name, role: u.role,
-        total_count: d.total_count,
-        total_db:    d.total_db,
+        total_count: tc,
+        total_db:    td,
         off_days: offDays,
         half_days: Number(a.off_half),
-        is_overridden: false,
+        is_overridden: !!m,
       };
     });
 
@@ -475,10 +477,8 @@ export default requireAuth(async function handler(req, res) {
           recontact   = EXCLUDED.recontact,
           updated_at  = NOW()
         RETURNING *`;
-      // override 자동 해제 — 일 TM 입력이 들어온 그 월의 sales_tm_monthly 행 삭제 → 자동 SUM 복귀
-      // (대표 지시 2026-06-01: 일 TM 디비가 월 TM에 안 오르는 문제 해결. 다른 월은 안 건드림)
-      const ymForDaily = String(b.work_date).slice(0, 7);
-      await sql`DELETE FROM sales_tm_monthly WHERE user_id=${userId} AND year_month=${ymForDaily}`;
+      // 대표 지시 2026-06-02: 월 TM 직접 입력값(override) 보존. 일 TM 입력해도 sales_tm_monthly 자동 삭제 안 함.
+      // sales_tm_monthly 행이 있으면 그 값이 월 TM 마감에서 우선 사용됨 (tm-summary 응답 로직).
       return res.status(200).json({ ok: true, row: rows[0] });
     }
     res.setHeader('Allow', 'GET,POST');
