@@ -4166,19 +4166,25 @@ function renderSalesOrders(){
     }
     if (isPriv){
       // [가져오기] — RESERVED 행을 UNPAID 로 이동 (대표 지시 2026-06-02)
+      // 가져오기 후 자동으로 미입금 탭 전환 + 날짜 필터 클리어 → 가져온 행이 반드시 보이게
       const importBtn = r.status === 'RESERVED' ? h('button',{
         class:'btn',
         style:'padding:4px 8px;font-size:11px;margin-right:4px;background:#eab308;color:#fff;border-color:#eab308;font-weight:700',
-        title:'예약건 → 미입금 (가져오기 · 오늘 날짜로)',
+        title:'예약건 → 미입금으로 이동 (자동 미입금 탭 전환)',
         onClick:async(e)=>{e.stopPropagation();
-          if (!confirm(`"${r.customer_name||''}" 예약 건을 미입금으로 가져옵니다.\n(오늘 날짜 기준)`)) return;
+          if (!confirm(`"${r.customer_name||''}" 예약건을 미입금으로 가져옵니다.\n(가져오기 후 자동으로 미입금 탭으로 이동)`)) return;
           try{
             const body = {...r, status:'UNPAID', reserved_date: null};
             const res = await api('/api/sales/orders',{method:'POST',body});
             const idx = State.salesOrders.findIndex(x=>x.id===r.id);
             if (idx>=0) State.salesOrders[idx] = res.order || {...r, status:'UNPAID', reserved_date: null};
-            renderApp(); showToast('미입금으로 가져왔습니다');
-          }catch(e){ alert(e.message); }
+            // 핵심: 미입금 탭으로 자동 전환 + 날짜 필터 클리어 (가져온 행이 안 보이는 사태 방지)
+            State.salesOrdersFilter.status = 'UNPAID';
+            State.salesOrdersFilter.dateFrom = '';
+            State.salesOrdersFilter.dateTo = '';
+            renderApp();
+            showToast(`✓ "${r.customer_name||''}" 미입금으로 가져왔습니다`);
+          }catch(e){ alert('가져오기 실패: '+e.message); }
         }
       },'⇒ 가져오기') : null;
       const editBtn = h('button',{class:'btn',style:'padding:4px 8px;font-size:11px;margin-right:4px',
