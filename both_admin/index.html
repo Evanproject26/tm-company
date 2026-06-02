@@ -4090,7 +4090,7 @@ function renderSalesOrders(){
     {k:'payment_bank',label:'은행명',type:'text',w:70},
     {k:'payment_account',label:'계좌',type:'text',w:160},
     {k:'amount',label:'금액',type:'amount',w:130},
-    {k:'payment_date',label:'완료/예약일자',type:'date',w:110,
+    {k:'payment_date',label: (State.salesOrdersFilter.status === 'RESERVED' ? '예약일자' : '완료일자'),type:'date',w:110,
       val:(r)=> r.status === 'RESERVED' ? r.reserved_date : r.payment_date},
     {k:'blank1',label:'',type:'text',w:70},
     {k:'blank2',label:'',type:'text',w:70},
