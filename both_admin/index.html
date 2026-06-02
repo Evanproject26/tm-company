@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v: 2026-05-13-bust-cache-2 — PB 색 톤 + 데모 시드 + 기본 ALL 필터 + 입금중복 강조 -->
+<!-- v: 2026-06-02-reservation-wording — 예약 → 예약건 워딩 통일 + 헤더 동적(예약일자) -->
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -3276,7 +3276,7 @@ async function logout(){
 // ─────────────── 영업 모듈 ───────────────
 const ORDER_STATUS_LABEL={
   UNPAID:'미입금',
-  RESERVED:'예약',
+  RESERVED:'예약건',
   PAID:'입금완료',
   // 레거시 (예전 데이터 표시용 — 새 입력 시는 사용 안 함)
   UNPAID_PROOF:'미입금', IN_PROGRESS:'입금중', PARTIAL:'일부납부', CANCELLED:'취소',
@@ -4013,7 +4013,7 @@ function renderSalesOrders(){
   const curStatus = State.salesOrdersFilter.status;
   const sumRow = h('div',{style:'display:flex;gap:10px;margin:0 0 12px;flex-wrap:wrap'},
     summaryCard('🔴 미입금',   cntUnpaid,   sumUnpaid,   '#fee2e2','#991b1b','#fca5a5','UNPAID',   curStatus==='UNPAID'),
-    summaryCard('🟡 예약',     cntReserved, sumReserved, '#fef3c7','#854d0e','#fde047','RESERVED', curStatus==='RESERVED'),
+    summaryCard('🟡 예약건',   cntReserved, sumReserved, '#fef3c7','#854d0e','#fde047','RESERVED', curStatus==='RESERVED'),
     summaryCard('🟢 입금완료', cntPaid,     sumPaid,     '#d1fae5','#065f46','#6ee7b7','PAID',     curStatus==='PAID'),
     summaryCard('전체',        rows.length, sumTotal,    '#fff',   '#37352f','#e9e9e7','ALL',      curStatus==='ALL'),
   );
@@ -4169,7 +4169,7 @@ function renderSalesOrders(){
       const importBtn = r.status === 'RESERVED' ? h('button',{
         class:'btn',
         style:'padding:4px 8px;font-size:11px;margin-right:4px;background:#eab308;color:#fff;border-color:#eab308;font-weight:700',
-        title:'예약 → 미입금 (가져오기)',
+        title:'예약건 → 미입금 (가져오기 · 오늘 날짜로)',
         onClick:async(e)=>{e.stopPropagation();
           if (!confirm(`"${r.customer_name||''}" 예약 건을 미입금으로 가져옵니다.\n(오늘 날짜 기준)`)) return;
           try{
@@ -4526,7 +4526,7 @@ function openOrderModal(existingOrder){
       field('통신사', carrierSel),
       field('상태', statusSel),
       field('금액 (원)', amountI),
-      field('완료/예약일자', payDateI, 'status=예약 시 예약일자, 그 외엔 완료일자(=입금일)'),
+      field('완료/예약일자', payDateI, 'status=예약건 시 예약일자(지급 예정일), 그 외엔 완료일자(=입금일)'),
       field('입금 은행', bankI),
       field('계좌번호', accountI),
     ),
