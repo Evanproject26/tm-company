@@ -4526,7 +4526,7 @@ function openOrderModal(existingOrder){
       field('통신사', carrierSel),
       field('상태', statusSel),
       field('금액 (원)', amountI),
-      field('입금일', payDateI),
+      field('완료/예약일자', payDateI, 'status=예약 시 예약일자, 그 외엔 완료일자(=입금일)'),
       field('입금 은행', bankI),
       field('계좌번호', accountI),
     ),
@@ -5417,7 +5417,8 @@ function _shMoveOnce(curInput, dir, doSelect){
   const next = _shCellAt(r+dr, c+dc);
   if(!next) return null;
   next.focus();
-  if(doSelect !== false) try{ next.select(); }catch(_){}
+  // 대표 지시 2026-06-02: 다음 셀 자동 전체선택 제거 — 키 입력 시 덮어쓰기 사고 방지
+  // (이전: next.select() → '5↓→7' 처럼 값이 멋대로 바뀌는 현상)
   return next;
 }
 // 전역 핸들러 한 번만 바인딩 — keydown/mouse 위임
