@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v: 2026-06-02-reservation-wording — 예약 → 예약건 워딩 통일 + 헤더 동적(예약일자) -->
+<!-- v: 2026-06-04-tm-monthly-null-fix — 월 마감 총디비 0 굳음 영구 해결 + 일 마감 백스페이스 가드 -->
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -5087,10 +5087,17 @@ function renderSalesTMDaily(){
     });
     const td = h('td',{class:'sheet-cell', style:`padding:0;background:${cellBg};text-align:center`}, input);
     // 일괄 저장용 후크 — 시트 위임 핸들러가 호출
+    // 🔥 2026-06-04 fix: 사용자가 셀 들렀다 백스페이스 한 번에 값 0으로 저장되는 사고 방지
+    // 일 마감은 그날 실제 기록값이라 override 패턴 아님 — 0=실제 0건 의미. 빈값을 0으로 강제하되 변동 없으면 skip
     input._sheetSave = async ()=>{
       const raw = input.value.replace(/[^0-9-]/g,'');
       const newVal = Number(raw)||0;
       input.value = String(newVal);
+      // dataset.orig 와 비교 — focus 시 0→'' 변환했으니 둘 다 zero-like 면 변동 없음
+      const orig = input.dataset.orig || '';
+      const origIsZeroLike = orig === '' || orig === '0';
+      const curIsZeroLike  = String(newVal) === '0';
+      if (origIsZeroLike && curIsZeroLike) return;
       if (newVal === Number(val||0)) return;
       await saveDailyCell(uid, {[key]: newVal});
     };
