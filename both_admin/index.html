@@ -4809,11 +4809,20 @@ function renderSalesTM(){
     });
     const td = h('td',{class:'sheet-cell', style:`padding:0;background:${m.bg};text-align:center`}, input);
     // 일괄 저장용 후크 — 시트 위임 핸들러가 호출
+    // 🔥 2026-06-04 fix: 빈값 = NULL 전송 (override 해제 → tm-summary 가 일 SUM 자동 합산)
+    // 이전: 빈값을 0 으로 강제 → API 가 0 으로 INSERT → tm-summary 가 그 0 을 override 로 인식 → 일 SUM 가려짐
     input._sheetSave = async ()=>{
-      const raw = input.value.replace(/[^0-9-]/g,'');
-      const newVal = Number(raw)||0;
-      input.value = String(newVal);
-      if (newVal === Number(val||0)) return;
+      const raw = input.value.trim().replace(/[^0-9-]/g,'');
+      const newVal = raw === '' ? null : Number(raw);
+      input.value = newVal === null ? '' : String(newVal);
+      // 변동 없으면 skip (실수로 셀 들렀다 나갔을 때 NULL 저장 방지)
+      const origRaw = String(val == null ? '' : val);
+      const curRaw  = newVal === null ? '' : String(newVal);
+      const origIsZeroLike = origRaw === '' || origRaw === '0';
+      const curIsZeroLike  = curRaw  === '' || curRaw  === '0';
+      // 0 ↔ '' 동치 처리: 둘 다 zero-like 면 변동 없음 (override 의도 없음)
+      if (origIsZeroLike && curIsZeroLike) return;
+      if (origRaw === curRaw) return;
       // Patch 방식 — 편집한 필드만 보냄 (대표 지시: 디비/마감 각각 독립적으로 override 가능)
       const body = key==='total_count' ? { total_count: newVal } : { total_db: newVal };
       await saveMonthlyCell(uid, body);
@@ -4823,7 +4832,7 @@ function renderSalesTM(){
       if (input.value === '0') input.value = '';
     });
     input.addEventListener('blur', ()=>{
-      if (input.value.trim() === '') input.value = '0';
+      // 빈값 유지 (override 해제 의도) — 강제 0 변환 제거
       input._sheetSave().catch(e=>showToast('저장 실패 — '+e.message));
     });
     return td;

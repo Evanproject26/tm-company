@@ -387,10 +387,18 @@ export default requireAuth(async function handler(req, res) {
       const ym = String(b.year_month || b.ym || '').match(/^\d{4}-\d{2}$/)?.[0];
       if (!ym) return res.status(400).json({ error: 'year_month required (YYYY-MM)' });
       // Patch 방식 — body에 명시된 필드만 업데이트, 미명시 필드는 기존값 유지 (대표 지시: 디비/마감 각각 따로 백필 가능)
-      const existing = (await sql`SELECT * FROM sales_tm_monthly WHERE user_id=${userId} AND year_month=${ym} LIMIT 1`)[0] || {};
-      const total_count = b.total_count !== undefined ? Number(b.total_count||0) : Number(existing.total_count||0);
-      const total_db    = b.total_db    !== undefined ? Number(b.total_db||0)    : Number(existing.total_db||0);
-      const off_days    = b.off_days    !== undefined ? Number(b.off_days||0)    : Number(existing.off_days||0);
+      // 🔥 2026-06-04 critical fix: 미명시 필드는 NULL/기존값 유지 — 0 으로 덮어쓰지 말 것
+      // 왜: total_count 만 보냈는데 total_db 가 0 으로 INSERT 되면 tm-summary 가 그 0 을 override 로 인식해 일 SUM 가려짐 (대표 지시 2026-06-04 사고)
+      // body.total_db === null 명시 → NULL (override 해제), undefined → 기존값 유지, 숫자 → 그 값
+      const existing = (await sql`SELECT * FROM sales_tm_monthly WHERE user_id=${userId} AND year_month=${ym} LIMIT 1`)[0] || null;
+      const pickNullable = (newVal, oldVal) => {
+        if (newVal === undefined) return oldVal ?? null;       // 미명시 → 기존값 (없으면 NULL)
+        if (newVal === null || newVal === '') return null;     // 명시적 NULL/빈값 → override 해제
+        return Number(newVal);
+      };
+      const total_count = pickNullable(b.total_count, existing?.total_count);
+      const total_db    = pickNullable(b.total_db,    existing?.total_db);
+      const off_days    = pickNullable(b.off_days,    existing?.off_days);
       const rows = await sql`
         INSERT INTO sales_tm_monthly (user_id, year_month, total_count, total_db, off_days, updated_at)
         VALUES (${userId}, ${ym}, ${total_count}, ${total_db}, ${off_days}, NOW())
