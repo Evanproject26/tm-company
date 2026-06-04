@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v: 2026-06-04-tm-monthly-null-fix — 월 마감 총디비 0 굳음 영구 해결 + 일 마감 백스페이스 가드 -->
+<!-- v: 2026-06-04-cross-tab-sync — 가져오기 필터 전체클리어 + RESERVED→PAID reserved_date 정리 + override 동기화 보존 -->
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -4063,7 +4063,8 @@ function renderSalesOrders(){
             if(!r) return;
             try{
               // 입금일자 비어있으면 오늘로 자동 설정 (대표 지시)
-              const payload = {...r, status:'PAID', payment_date: r.payment_date || today};
+              // 🔥 2026-06-04 fix: RESERVED → PAID 직접 변환 시 reserved_date 잔존 제거 (DB 정합성)
+              const payload = {...r, status:'PAID', payment_date: r.payment_date || today, reserved_date: null};
               const res = await api('/api/sales/orders',{method:'POST',body:payload});
               Object.assign(r, res.order);
               okCnt++;
@@ -4178,10 +4179,14 @@ function renderSalesOrders(){
             const res = await api('/api/sales/orders',{method:'POST',body});
             const idx = State.salesOrders.findIndex(x=>x.id===r.id);
             if (idx>=0) State.salesOrders[idx] = res.order || {...r, status:'UNPAID', reserved_date: null};
-            // 핵심: 미입금 탭으로 자동 전환 + 날짜 필터 클리어 (가져온 행이 안 보이는 사태 방지)
+            // 핵심: 미입금 탭으로 자동 전환 + 모든 필터 클리어 (가져온 행이 안 보이는 사태 영구 차단)
+            // 🔥 2026-06-04 fix: tm/vendor/q 도 클리어 — 다른 필터 활성 시 가져온 행 가려지는 버그 차단
             State.salesOrdersFilter.status = 'UNPAID';
             State.salesOrdersFilter.dateFrom = '';
             State.salesOrdersFilter.dateTo = '';
+            State.salesOrdersFilter.tm = 'ALL';
+            State.salesOrdersFilter.vendor = 'ALL';
+            State.salesOrdersFilter.q = '';
             renderApp();
             showToast(`✓ "${r.customer_name||''}" 미입금으로 가져왔습니다`);
           }catch(e){ alert('가져오기 실패: '+e.message); }
@@ -5048,13 +5053,20 @@ function renderSalesTMDaily(){
       // 일 TM 마감 입력 → 월 TM 마감 합산 즉시 갱신 (페이지 전환 의존 없이)
       State.salesTmLoadedKey = null;
       // 같은 user_id 의 일별 db_count/count SUM 을 다시 계산해서 salesTmRows 에 즉시 반영
+      // 🔥 2026-06-04 fix: override 가 있는 user 는 일 SUM 으로 덮어쓰지 말 것 — 그게 진짜 override 동작
       try{
         const sameUserRows = (State.salesTmDailyRows||[]).filter(x=>x.user_id===uid);
         const sumDb    = sameUserRows.reduce((s,x)=>s+Number(x.db_count||0),0);
         const sumCount = sameUserRows.reduce((s,x)=>s+Number(x.count||0),0);
         const tmIdx = (State.salesTmRows||[]).findIndex(rr=>rr.user_id===uid);
         if (tmIdx >= 0){
-          State.salesTmRows[tmIdx] = { ...State.salesTmRows[tmIdx], total_db: sumDb, total_count: sumCount, is_overridden: false };
+          const prev = State.salesTmRows[tmIdx];
+          // is_overridden 일 땐 SUM 덮어쓰지 말 것 (API 가 override 우선이므로 그대로 보존)
+          if (prev && prev.is_overridden) {
+            // override 행은 건드리지 않음 — 다음 reload 시 API 가 정확한 값 반환
+          } else {
+            State.salesTmRows[tmIdx] = { ...prev, total_db: sumDb, total_count: sumCount };
+          }
         }
       }catch(_){}
       // renderApp 으로 DOM 통째 재생성되면 활성 셀 포커스 날아감 → 좌표 저장 후 복원
