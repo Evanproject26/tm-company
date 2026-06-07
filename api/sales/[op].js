@@ -487,8 +487,28 @@ export default requireAuth(async function handler(req, res) {
           recontact   = EXCLUDED.recontact,
           updated_at  = NOW()
         RETURNING *`;
-      // 대표 지시 2026-06-02: 월 TM 직접 입력값(override) 보존. 일 TM 입력해도 sales_tm_monthly 자동 삭제 안 함.
-      // sales_tm_monthly 행이 있으면 그 값이 월 TM 마감에서 우선 사용됨 (tm-summary 응답 로직).
+      // 🔥 2026-06-07 정책 변경 (대표 지시 — 김민선 차장 카톡 사고):
+      // 일 마감 입력 시 그 컬럼의 sales_tm_monthly override 자동 해제 (NULL).
+      // 이전 정책 (d3241b6: override 영구 보존) → 직원 입장에서 "일 입력해도 월 반영 안 됨" 버그처럼 보임.
+      // 새 정책: 일 마감 입력하면 그 컬럼만 자동 SUM 모드로 복귀 (override 해제).
+      //  - db_count 입력 시 sales_tm_monthly.total_db = NULL
+      //  - count 입력 시 sales_tm_monthly.total_count = NULL
+      // 다른 컬럼 (off_days 등) override 는 그대로 보존.
+      try {
+        const ym = String(b.work_date).slice(0,7);
+        const clearDb    = (b.db_count !== undefined);
+        const clearCount = (b.count    !== undefined);
+        if (clearDb && clearCount) {
+          await sql`UPDATE sales_tm_monthly SET total_db = NULL, total_count = NULL, updated_at = NOW()
+                    WHERE user_id = ${userId} AND year_month = ${ym}`;
+        } else if (clearDb) {
+          await sql`UPDATE sales_tm_monthly SET total_db = NULL, updated_at = NOW()
+                    WHERE user_id = ${userId} AND year_month = ${ym}`;
+        } else if (clearCount) {
+          await sql`UPDATE sales_tm_monthly SET total_count = NULL, updated_at = NOW()
+                    WHERE user_id = ${userId} AND year_month = ${ym}`;
+        }
+      } catch (e) { /* override 해제 실패해도 일 마감 저장은 성공 — 비치명적 */ }
       return res.status(200).json({ ok: true, row: rows[0] });
     }
     res.setHeader('Allow', 'GET,POST');
